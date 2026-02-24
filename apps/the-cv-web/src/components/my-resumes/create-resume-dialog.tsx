@@ -50,8 +50,8 @@ export function CreateResumeDialog({ children }: CreateResumeDialogProps) {
 					</div>
 					<div className="flex items-center gap-2">
 						<Checkbox
-							id="save-to-cloud"
-							checked={!localOnly}
+							id="local-only"
+							checked={localOnly}
 							onCheckedChange={(checked) => setLocalOnly(checked === true)}
 						/>
 						<Label htmlFor="local-only">Local only</Label>

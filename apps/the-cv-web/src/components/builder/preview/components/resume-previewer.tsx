@@ -54,11 +54,11 @@ export function ResumePreviewer({ pages, pageContentRef }: ResumePreviewerProps)
 		<ScrollArea className="h-full w-full" type="scroll" scrollHideDelay={100}>
 			<div ref={pageContentRef} className="p-2 pl-0 flex flex-col items-center gap-2">
 				<AspectRatio ratio={A4_ASPECT}>
-					<div className="bg-card rounded-lg shadow-sm w-full h-full"></div>
+					<div className="bg-card rounded-xl w-full h-full"></div>
 				</AspectRatio>
 				{pages.map((page) => (
 					<AspectRatio key={page.id} ratio={A4_ASPECT}>
-						<div className="bg-card rounded-lg shadow-sm w-full h-full">
+						<div className="bg-card rounded-xl w-full h-full">
 							<DomRenderer node={page} />
 						</div>
 					</AspectRatio>
