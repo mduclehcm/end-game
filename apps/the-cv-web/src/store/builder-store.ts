@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { setupAutoSave } from "./auto-save";
 import type { BuilderSlice, DocumentSlice } from "./slices";
 import { createBuilderSlice } from "./slices/builder-slice";
 import { createDocumentSlice } from "./slices/document-slice";
@@ -16,3 +17,5 @@ export const useBuilderStore = create<BuilderState>()(
 		...createDocumentSlice(...args),
 	})),
 );
+
+setupAutoSave(useBuilderStore);

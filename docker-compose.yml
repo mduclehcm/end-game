@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: algo
+      POSTGRES_PASSWORD: algo
+      POSTGRES_DB: algo_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U algo -d algo_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  resume-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+      args:
+        SERVICE_NAME: resume-service
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://algo:algo@postgres:5432/algo_dev"
+    volumes:
+      # Whole service folder from volume (src, config, etc.)
+      - ./services/resume-service:/app/services/resume-service
+      - ./packages/cv-core:/app/packages/cv-core
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

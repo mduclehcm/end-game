@@ -1,6 +1,6 @@
 import { Bug, BugOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDebugger } from "@/hooks/use-debugger";
+import { useDebugger } from "@/hooks/use-debug-mode";
 
 export function ToggleDebugModeButton() {
 	const [debugMode, toggleDebugMode] = useDebugger();

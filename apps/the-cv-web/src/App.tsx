@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { GlobalErrorBoundary } from "./pages/share/error.page";
 import LoadingPage from "./pages/share/loading.page";
 
@@ -10,13 +11,16 @@ const LazyBuilderPage = lazy(() => import("./pages/builder/builder.page"));
 function App() {
 	return (
 		<GlobalErrorBoundary>
-			<Suspense fallback={<LoadingPage />}>
-				<Routes>
-					<Route path="/" Component={LazyHomePage} />
-					<Route path="/my-resumes" Component={LazyMyResumesPage} />
-					<Route path="/resumes/:id" Component={LazyBuilderPage} />
-				</Routes>
-			</Suspense>
+			<TooltipProvider>
+				<Suspense fallback={<LoadingPage />}>
+					<Routes>
+						<Route path="/" Component={LazyHomePage} />
+						<Route path="/my-resumes" Component={LazyMyResumesPage} />
+						<Route path="/c/:id" Component={LazyBuilderPage} />
+						<Route path="/r/:id" Component={LazyBuilderPage} />
+					</Routes>
+				</Suspense>
+			</TooltipProvider>
 		</GlobalErrorBoundary>
 	);
 }

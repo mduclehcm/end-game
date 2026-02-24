@@ -1,15 +1,17 @@
 import { useEffect } from "react";
 import { PageHeader } from "@/components/header/common.header";
+import { CreateResumeDialog } from "@/components/my-resumes/create-resume-dialog";
 import { NavLink } from "@/components/nav-link";
 import { Button } from "@/components/ui/button";
-import { useCreateAndNavigate } from "@/hooks/use-document-queries";
 import { Logger } from "@/lib/logger";
-import { PageErrorBoundary } from "@/pages/share/error.page";
+import { Page } from "../share/page";
 
 const logger = new Logger("home-page");
 
-function HomePage() {
-	const { createAndNavigate, isPending } = useCreateAndNavigate();
+const HomePage = Page(() => {
+	useEffect(() => {
+		logger.info("page view");
+	}, []);
 
 	return (
 		<div className="min-h-screen flex flex-col bg-linear-to-b from-muted/30 to-background">
@@ -23,22 +25,17 @@ function HomePage() {
 					<Button asChild size="lg">
 						<NavLink to="/my-resumes">My resumes</NavLink>
 					</Button>
-					<Button variant="outline" size="lg" onClick={createAndNavigate} disabled={isPending}>
-						{isPending ? "Creating…" : "New resume"}
-					</Button>
+					<CreateResumeDialog>
+						<Button variant="outline" size="lg">
+							New resume
+						</Button>
+					</CreateResumeDialog>
 				</div>
 			</main>
 		</div>
 	);
-}
+});
 
-export default function HomePageWithErrorBoundary() {
-	useEffect(() => {
-		logger.info("page view");
-	}, []);
-	return (
-		<PageErrorBoundary>
-			<HomePage />
-		</PageErrorBoundary>
-	);
-}
+HomePage.displayName = "HomePage";
+
+export default HomePage;

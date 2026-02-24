@@ -1,11 +1,8 @@
 const path = require("node:path");
 const webpack = require("webpack");
 
-// Optional deps that @nestjs/terminus loads for DB health checks; we only use HTTP health.
-const optionalPeers = ["@mikro-orm/core", "@nestjs/mongoose", "@nestjs/sequelize", "@nestjs/typeorm"];
+const optionalPeers = ["@mikro-orm/core", "@nestjs/mongoose", "@nestjs/sequelize"];
 
-// Bundle node_modules into the output (Nest default excludes them).
-// https://docs.nestjs.com/cli/monorepo#webpack-options
 module.exports = (options) => ({
 	...options,
 	externals: [],

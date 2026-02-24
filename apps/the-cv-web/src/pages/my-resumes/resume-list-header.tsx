@@ -1,12 +1,8 @@
 import { Plus } from "lucide-react";
+import { CreateResumeDialog } from "@/components/my-resumes/create-resume-dialog";
 import { Button } from "@/components/ui/button";
 
-type ResumeListHeaderProps = {
-	onCreateClick: () => void;
-	isCreating: boolean;
-};
-
-export function ResumeListHeader({ onCreateClick, isCreating }: ResumeListHeaderProps) {
+export function ResumeListHeader() {
 	return (
 		<div className="mb-8">
 			<div className="flex items-center justify-between gap-2">
@@ -14,10 +10,12 @@ export function ResumeListHeader({ onCreateClick, isCreating }: ResumeListHeader
 					<h1 className="text-2xl font-bold">My resumes</h1>
 					<p className="text-muted-foreground">Manage and edit your saved resumes.</p>
 				</div>
-				<Button size="sm" onClick={onCreateClick} disabled={isCreating}>
-					{isCreating ? "Creating…" : "New resume"}
-					<Plus className="size-4" />
-				</Button>
+				<CreateResumeDialog>
+					<Button size="sm">
+						<Plus className="size-4" />
+						New resume
+					</Button>
+				</CreateResumeDialog>
 			</div>
 		</div>
 	);

@@ -1,8 +1,8 @@
-export type { BuilderSlice, BuilderSliceActions } from "./builder-slice";
-export { createBuilderSliceActions, initialBuilderSlice } from "./builder-slice";
+export type { BuilderSlice } from "./builder-slice";
+export { createBuilderSlice } from "./builder-slice";
 
-export type { DocumentSlice, DocumentSliceActions } from "./document-slice";
-export { createDocumentSliceActions, initialDocumentSlice } from "./document-slice";
+export type { DocumentSlice, SaveStatus } from "./document-slice";
+export { createDocumentSlice } from "./document-slice";
 
 export type { RenderEngineSlice } from "./render-engine-slice";
-export { initialRenderEngineSlice } from "./render-engine-slice";
+export { createRenderEngineSlice } from "./render-engine-slice";

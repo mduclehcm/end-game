@@ -26,7 +26,8 @@
 
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@algo/cv-core": ["../../packages/cv-core/src/index.ts"]
 		}
 	},
 	"include": ["src"],

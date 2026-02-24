@@ -1,6 +1,6 @@
 import { Section } from "../section";
 
-export function AccomplishmentsSection() {
+export function AccomplishmentsFormSection() {
 	return (
 		<Section
 			name="accomplishments"

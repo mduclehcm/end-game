@@ -1,5 +1,5 @@
-import { formatDistanceToNow } from "date-fns";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { type DocumentInfo, DocumentSource } from "@algo/cv-core";
+import { Cloud, HardDrive, MoreHorizontal, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -20,29 +20,36 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDeleteDocumentMutation } from "@/hooks/use-document-queries";
-import type { DocumentListItem } from "@/lib/storage";
+import { useDeleteDocument } from "@/hooks/use-document-actions";
+import { RelativeTime } from "../ui/relative-time";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type ResumeCardProps = {
-	resume: DocumentListItem;
+	resume: DocumentInfo;
 };
 
 export function ResumeCard({ resume }: ResumeCardProps) {
 	const navigate = useNavigate();
 	const [confirmDelete, setConfirmDelete] = useState(false);
-	const deleteMutation = useDeleteDocumentMutation();
+	const { deleteDocument, loading } = useDeleteDocument();
 
 	const onSelect = useCallback(() => {
-		navigate(`/resumes/${resume.id}`, { state: { internal: true } });
-	}, [navigate, resume.id]);
+		navigate(resume.source === DocumentSource.Cloud ? `/c/${resume.id}` : `/r/${resume.id}`, {
+			state: { internal: true },
+		});
+	}, [navigate, resume.id, resume.source]);
 
 	const onDeleteClick = useCallback(() => {
 		setConfirmDelete(true);
 	}, []);
 
 	const handleConfirm = useCallback(() => {
-		deleteMutation.mutate({ id: resume.id }, { onSuccess: () => setConfirmDelete(false) });
-	}, [resume.id, deleteMutation]);
+		deleteDocument({
+			id: resume.id,
+			isCloudDocument: resume.source === DocumentSource.Cloud,
+			onSuccess: () => setConfirmDelete(false),
+		});
+	}, [deleteDocument, resume.id, resume.source]);
 
 	return (
 		<>
@@ -59,16 +66,29 @@ export function ResumeCard({ resume }: ResumeCardProps) {
 				}}
 			>
 				<CardHeader className="flex flex-row items-start justify-between gap-2">
-					<div className="space-y-1.5">
+					<div className="space-y-1.5 min-w-0 flex-1">
 						<CardTitle className="line-clamp-1">{resume.title}</CardTitle>
 						<CardDescription>
-							Updated{" "}
-							{formatDistanceToNow(new Date(resume.updatedAt), {
-								addSuffix: true,
-							})}
+							Updated <RelativeTime date={resume.updatedAt} />
 						</CardDescription>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-2 shrink-0">
+						{resume.source !== DocumentSource.Cloud && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<HardDrive className="size-5 text-muted-foreground" aria-label="Local document" />
+								</TooltipTrigger>
+								<TooltipContent>Document is saved locally</TooltipContent>
+							</Tooltip>
+						)}
+						{resume.source === DocumentSource.Cloud && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Cloud className="size-5 text-muted-foreground" aria-label="Cloud document" />
+								</TooltipTrigger>
+								<TooltipContent>Document is saved in the cloud</TooltipContent>
+							</Tooltip>
+						)}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button variant="ghost" size="icon" className="size-8" onClick={(e) => e.stopPropagation()}>
@@ -103,8 +123,8 @@ export function ResumeCard({ resume }: ResumeCardProps) {
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction variant="destructive" onClick={handleConfirm} disabled={deleteMutation.isPending}>
-							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+						<AlertDialogAction variant="destructive" onClick={handleConfirm} disabled={loading}>
+							{loading ? "Deleting…" : "Delete"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

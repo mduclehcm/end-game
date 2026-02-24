@@ -1,24 +1,63 @@
+import { DocumentBuiltInSection, type DocumentDetail, type DocumentSection, type DocumentSource } from "@algo/cv-core";
 import type { StateCreator } from "zustand";
-import type { UserDocument } from "@/core/document";
-import { Logger } from "@/lib/logger";
 
-const logger = new Logger("document-store");
+export type SaveStatus = "idle" | "saving" | "saved";
 
 export interface DocumentSlice {
-	document: UserDocument | null;
+	documentId: string;
+	documentSource: DocumentSource | null;
+	title: string;
+	sections: DocumentSection[];
 	fields: Record<string, string>;
-	setDocument: (document: UserDocument) => void;
+	saveStatus: SaveStatus;
+
+	setDocument: (document: DocumentDetail) => void;
 	setFieldValue: (field: string, value: string) => void;
+	reorderSections: (activeId: string, overId: string) => void;
+	setSaveStatus: (status: SaveStatus) => void;
 }
 
 export const createDocumentSlice: StateCreator<DocumentSlice> = (set) => ({
-	document: null,
+	documentId: "",
+	documentSource: null,
+	title: "",
+	sections: [],
 	fields: {},
+	saveStatus: "idle",
+
 	setDocument: (document) => {
-		logger.info(`setting document to ${document.id}`);
-		set(() => ({ document, fields: document.fields }));
+		const sections = DocumentBuiltInSection.map((section) => ({
+			kind: section,
+			order: 2 + (Number(document.fields[`${section}.order`]) ?? 0),
+			draggable: true,
+		})).sort((a, b) => a.order - b.order);
+		set(() => ({
+			documentId: document.id,
+			documentSource: document.source,
+			title: document.title,
+			sections,
+			fields: document.fields,
+			saveStatus: "idle",
+		}));
 	},
 	setFieldValue: (field, value) => {
 		set((state) => ({ fields: { ...state.fields, [field]: value } }));
 	},
+	reorderSections: (activeId, overId) => {
+		set((state) => {
+			const oldIndex = state.sections.findIndex((s) => s.kind === activeId);
+			const newIndex = state.sections.findIndex((s) => s.kind === overId);
+			if (oldIndex === -1 || newIndex === -1) return state;
+			const updated = [...state.sections];
+			const [moved] = updated.splice(oldIndex, 1);
+			updated.splice(newIndex, 0, moved);
+			const reordered = updated.map((s, i) => ({ ...s, order: i }));
+			const fields = { ...state.fields };
+			for (const section of reordered) {
+				fields[`${section.kind}.order`] = String(section.order);
+			}
+			return { sections: reordered, fields };
+		});
+	},
+	setSaveStatus: (status) => set(() => ({ saveStatus: status })),
 });

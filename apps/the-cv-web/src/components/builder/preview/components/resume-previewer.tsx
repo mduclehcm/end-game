@@ -1,17 +1,7 @@
-import { useMemo } from "react";
 import { useWatch } from "react-hook-form";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	box,
-	type DocumentTemplate,
-	fixed,
-	type LayoutNode,
-	type LayoutTextNode,
-	type ResumeDocument,
-} from "@/core/document";
-import type { RenderBoxNode, RenderTextNode, RenderTree } from "@/core/render/render-tree";
-import { getTemplate } from "@/data/default-template";
+import type { RenderTree } from "@/core/render/render-tree";
 import { A4_ASPECT } from "../constants";
 
 interface ResumePreviewerProps {
@@ -61,8 +51,11 @@ function DomRenderer({ node }: DomRendererProps) {
 
 export function ResumePreviewer({ pages, pageContentRef }: ResumePreviewerProps) {
 	return (
-		<ScrollArea className="h-full w-full p-2 pl-0" type="scroll" scrollHideDelay={100}>
-			<div ref={pageContentRef} className="flex flex-col items-center gap-2">
+		<ScrollArea className="h-full w-full" type="scroll" scrollHideDelay={100}>
+			<div ref={pageContentRef} className="p-2 pl-0 flex flex-col items-center gap-2">
+				<AspectRatio ratio={A4_ASPECT}>
+					<div className="bg-card rounded-lg shadow-sm w-full h-full"></div>
+				</AspectRatio>
 				{pages.map((page) => (
 					<AspectRatio key={page.id} ratio={A4_ASPECT}>
 						<div className="bg-card rounded-lg shadow-sm w-full h-full">

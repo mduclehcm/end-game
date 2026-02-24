@@ -1,8 +1,8 @@
-export { AccomplishmentsSection } from "./accomplishments-section";
-export { AreasOfExpertiseSection } from "./areas-of-expertise-section";
-export { EducationSection } from "./education-section";
-export { PersonalDetailsSection } from "./personal-details.form-section";
-export { PowerStatementSection } from "./power-statement-section";
-export { ProfessionalExperienceSection as EmploymentHistorySection } from "./professional-experience-section";
-export { ProfessionalSummarySection } from "./professional-summary-section";
-export { TechnicalProficienciesSection } from "./technical-proficiencies-section";
+export { AccomplishmentsFormSection } from "./accomplishments-section";
+export { AreasOfExpertiseFormSection } from "./areas-of-expertise.form-section";
+export { EducationFormSection } from "./education.form-section";
+export { PersonalDetailsFormSection } from "./personal-details.form-section";
+export { PowerStatementFormSection } from "./power-statement.form-section";
+export { ProfessionalExperienceFormSection } from "./professional-experience.form-section";
+export { ProfessionalSummaryFormSection } from "./professional-summary.form-section";
+export { TechnicalProficienciesFormSection } from "./technical-proficiencies.form-section";
