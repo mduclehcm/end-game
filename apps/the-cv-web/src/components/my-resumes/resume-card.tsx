@@ -2,6 +2,7 @@ import { type DocumentInfo, DocumentSource } from "@algo/cv-core";
 import { Cloud, HardDrive, MoreHorizontal, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { RelativeTime } from "@/components/relative-time";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -20,9 +21,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeleteDocument } from "@/hooks/use-document-actions";
-import { RelativeTime } from "../ui/relative-time";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type ResumeCardProps = {
 	resume: DocumentInfo;
