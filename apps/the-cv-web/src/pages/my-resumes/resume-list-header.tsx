@@ -11,7 +11,7 @@ export function ResumeListHeader() {
 					<p className="text-muted-foreground">Manage and edit your saved resumes.</p>
 				</div>
 				<CreateResumeDialog>
-					<Button size="sm">
+					<Button>
 						<Plus className="size-4" />
 						New resume
 					</Button>

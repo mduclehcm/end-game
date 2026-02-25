@@ -57,7 +57,7 @@ const DEFAULT_LAYOUT = { side: 45, preview: 55 };
 
 function Builder() {
 	return (
-		<div className="h-screen w-screen flex flex-col bg-background max-w-[1600px] mx-auto">
+		<div className="h-screen w-screen flex flex-col bg-muted">
 			<BuilderHeader />
 			<ResizablePanelGroup className="h-full w-full" defaultLayout={DEFAULT_LAYOUT}>
 				<ResizablePanel id="side" minSize={"600px"} maxSize={"1000px"} collapsible>
