@@ -127,3 +127,22 @@
 		@apply font-sans;
 	}
 }
+
+@keyframes navigation-loading {
+	0% {
+		transform: translateX(-100%);
+	}
+	50% {
+		transform: translateX(300%);
+	}
+	100% {
+		transform: translateX(-100%);
+	}
+}
+
+.navigation-loading-bar-indicator {
+	height: 100%;
+	width: 33%;
+	background-color: var(--color-primary);
+	animation: navigation-loading 3s ease-in-out infinite;
+}
