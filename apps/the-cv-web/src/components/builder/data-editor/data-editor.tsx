@@ -23,8 +23,9 @@ import {
 	ProfessionalSummaryFormSection,
 	TechnicalProficienciesFormSection,
 } from "./sections";
+import type { SectionProps } from "./sections/share";
 
-const sectionComponentMap: Record<string, React.FC> = {
+const sectionComponentMap: Record<string, React.FC<SectionProps>> = {
 	experience: ProfessionalExperienceFormSection,
 	education: EducationFormSection,
 	skills: AreasOfExpertiseFormSection,
@@ -49,9 +50,9 @@ function SortableItem({ section }: { section: DocumentSection }) {
 
 	return (
 		<div ref={setNodeRef} style={style}>
-			<FieldGroup className="bg-card rounded-xl py-2 pr-4">
+			<FieldGroup className="bg-card rounded-xl">
 				<SortableHandleContext.Provider value={{ attributes, listeners }}>
-					<Component />
+					<Component isDragging={isDragging} />
 				</SortableHandleContext.Provider>
 			</FieldGroup>
 		</div>
@@ -76,12 +77,12 @@ export function DataEditor() {
 
 	return (
 		<div className="p-2 pr-0 grid gap-2">
-			<FieldGroup className="bg-card rounded-xl py-2 pr-4">
+			<FieldGroup className="bg-card rounded-xl">
 				<AnimatedSection index={0}>
 					<PersonalDetailsFormSection />
 				</AnimatedSection>
 			</FieldGroup>
-			<FieldGroup className="bg-card rounded-xl py-2 pr-4">
+			<FieldGroup className="bg-card rounded-xl">
 				<AnimatedSection index={1}>
 					<ProfessionalSummaryFormSection />
 				</AnimatedSection>

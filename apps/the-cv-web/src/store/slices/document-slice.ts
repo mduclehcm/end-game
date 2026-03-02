@@ -3,6 +3,20 @@ import type { StateCreator } from "zustand";
 
 export type SaveStatus = "idle" | "saving" | "saved";
 
+const EXPERIENCE_KEYS = ["position", "company", "startDate", "endDate", "location", "description"] as const;
+const EDUCATION_KEYS = ["institution", "degree", "startDate", "endDate", "city", "description"] as const;
+
+export function getArrayIndices(fields: Record<string, string>, section: "experience" | "education"): number[] {
+	const re = new RegExp(`^(?:content\\.)?${section}\\.(\\d+)\\.`);
+	const indices = new Set<number>();
+	for (const key of Object.keys(fields)) {
+		const m = key.match(re);
+		if (m) indices.add(parseInt(m[1], 10));
+	}
+	const sorted = [...indices].sort((a, b) => a - b);
+	return sorted.length > 0 ? sorted : [0];
+}
+
 export interface DocumentSlice {
 	documentId: string;
 	documentSource: DocumentSource | null;
@@ -13,6 +27,8 @@ export interface DocumentSlice {
 
 	setDocument: (document: DocumentDetail) => void;
 	setFieldValue: (field: string, value: string) => void;
+	addArrayItem: (section: "experience" | "education") => void;
+	removeArrayItem: (section: "experience" | "education", index: number) => void;
 	reorderSections: (activeId: string, overId: string) => void;
 	setSaveStatus: (status: SaveStatus) => void;
 }
@@ -42,6 +58,41 @@ export const createDocumentSlice: StateCreator<DocumentSlice> = (set) => ({
 	},
 	setFieldValue: (field, value) => {
 		set((state) => ({ fields: { ...state.fields, [field]: value } }));
+	},
+	addArrayItem: (section) => {
+		set((state) => {
+			const indices = getArrayIndices(state.fields, section);
+			const nextIndex = indices.length > 0 ? Math.max(...indices) + 1 : 0;
+			const keys = section === "experience" ? EXPERIENCE_KEYS : EDUCATION_KEYS;
+			const newFields = { ...state.fields };
+			for (const key of keys) {
+				newFields[`${section}.${nextIndex}.${key}`] = "";
+			}
+			return { fields: newFields };
+		});
+	},
+	removeArrayItem: (section, index) => {
+		set((state) => {
+			const newFields: Record<string, string> = {};
+			const re = new RegExp(`^(content\\.)?${section}\\.(\\d+)\\.(.+)$`);
+			for (const [k, v] of Object.entries(state.fields)) {
+				const match = k.match(re);
+				if (!match) {
+					newFields[k] = v;
+					continue;
+				}
+				const prefix = match[1] ?? "";
+				const keyIndex = parseInt(match[2], 10);
+				const subKey = match[3];
+				if (keyIndex === index) continue;
+				if (keyIndex > index) {
+					newFields[`${prefix}${section}.${keyIndex - 1}.${subKey}`] = v;
+				} else {
+					newFields[k] = v;
+				}
+			}
+			return { fields: newFields };
+		});
 	},
 	reorderSections: (activeId, overId) => {
 		set((state) => {

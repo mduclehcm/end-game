@@ -9,24 +9,30 @@ const defaultDocument: Record<string, string> = {
 	"content.personal.postalCode": "10001",
 	"content.personal.country": "United States",
 	"content.personal.linkedin": "https://linkedin.com/in/john-doe",
+	"content.personal.address": "",
+	"content.personal.nationality": "",
+	"content.personal.placeOfBirth": "",
+	"content.personal.drivingLicense": "",
+	"content.personal.dateOfBirth": "",
 
 	// summary
 	"content.summary.text": "A brief summary of your professional background and key strengths.",
 
-	// experience
-	"content.experience.0.company": "Company 1",
-	"content.experience.0.position": "Software Engineer",
-	"content.experience.0.description": "A brief description of your professional background and key strengths.",
-	"content.experience.0.startDate": "2020-01-01",
-	"content.experience.0.endDate": "2024-01-01",
-	"content.experience.0.location": "New York, NY",
-	"content.experience.0.postalCode": "10001",
-	"content.experience.0.country": "United States",
-	"content.experience.0.linkedin": "https://linkedin.com/in/john-doe",
+	// experience (array: one empty item by default)
+	"content.experience.0.position": "",
+	"content.experience.0.company": "",
+	"content.experience.0.startDate": "",
+	"content.experience.0.endDate": "",
+	"content.experience.0.location": "",
+	"content.experience.0.description": "",
 
-	// education
-	"content.education.0.institution": "University 1",
-	"content.education.0.degree": "Bachelor of Science",
+	// education (array: one empty item by default)
+	"content.education.0.institution": "",
+	"content.education.0.degree": "",
+	"content.education.0.startDate": "",
+	"content.education.0.endDate": "",
+	"content.education.0.city": "",
+	"content.education.0.description": "",
 
 	// skills
 	"content.skills.0.skill": "JavaScript",
