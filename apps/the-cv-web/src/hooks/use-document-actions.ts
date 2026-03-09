@@ -1,11 +1,17 @@
-import type { CreateDocumentPayload } from "@algo/cv-core";
+import type { CreateDocumentPayload, DocumentData } from "@algo/cv-core";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateLocalDocument, useDeleteLocalDocument } from "@/hooks/use-local-document-queries";
+import { updateCloudDocument } from "@/lib/api";
 import { Logger } from "@/lib/logger";
 import { useCreateCloudDocument, useDeleteCloudDocument } from "./use-cloud-document-actions";
 
 const logger = new Logger("document-actions");
+
+export type CreateDocumentOptions = CreateDocumentPayload & {
+	localOnly: boolean;
+	initialData?: DocumentData;
+};
 
 export function useCreateDocument() {
 	const [loading, setLoading] = useState(false);
@@ -14,13 +20,20 @@ export function useCreateDocument() {
 	const cloudMutation = useCreateCloudDocument();
 
 	const createDocument = useCallback(
-		({ title, localOnly }: CreateDocumentPayload & { localOnly: boolean }) => {
+		({ title, localOnly, initialData }: CreateDocumentOptions) => {
 			setLoading(true);
 			if (!localOnly) {
 				cloudMutation.mutate(
 					{ title },
 					{
-						onSuccess: (documentDetail) => {
+						onSuccess: async (documentDetail) => {
+							if (initialData?.fieldValues && Object.keys(initialData.fieldValues).length > 0) {
+								try {
+									await updateCloudDocument(documentDetail.id, initialData.fieldValues);
+								} catch (err) {
+									logger.errorObj("Failed to patch initial data", err);
+								}
+							}
 							setLoading(false);
 							navigate(`/c/${documentDetail.id}`, { state: { internal: true } });
 						},
@@ -30,18 +43,18 @@ export function useCreateDocument() {
 					},
 				);
 			} else {
-				const documentDetail: CreateDocumentPayload = {
-					title,
-				};
-				localMutation.mutate(documentDetail, {
-					onSuccess: (documentDetail) => {
-						setLoading(false);
-						navigate(`/r/${documentDetail.id}`, { state: { internal: true } });
+				localMutation.mutate(
+					{ title, initialData },
+					{
+						onSuccess: (documentDetail) => {
+							setLoading(false);
+							navigate(`/r/${documentDetail.id}`, { state: { internal: true } });
+						},
+						onError: () => {
+							setLoading(false);
+						},
 					},
-					onError: () => {
-						setLoading(false);
-					},
-				});
+				);
 			}
 		},
 		[cloudMutation, navigate, localMutation],

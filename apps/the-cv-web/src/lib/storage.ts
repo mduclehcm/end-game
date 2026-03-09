@@ -1,5 +1,6 @@
 import {
 	type CreateDocumentPayload,
+	type DocumentData,
 	type DocumentDetail,
 	DocumentDetailSchema,
 	type DocumentInfo,
@@ -45,19 +46,28 @@ function setDocumentList(list: DocumentInfo[]) {
 	localStorage.setItem(LIST_KEY, JSON.stringify(list));
 }
 
-export async function saveDocument(payload: CreateDocumentPayload): Promise<DocumentDetail> {
+export type SaveDocumentPayload = CreateDocumentPayload & {
+	initialData?: DocumentData;
+};
+
+export async function saveDocument(payload: SaveDocumentPayload): Promise<DocumentDetail> {
 	const id = nanoid(10);
 	const now = new Date().toISOString();
 	const source = DocumentSource.Local;
 	const key = getKey(id);
 	logger.info(`saving document ${payload.title} to ${key}`);
+	const data: DocumentData = payload.initialData ?? {
+		sectionIds: [],
+		sections: [],
+		fieldValues: {},
+	};
 	const documentDetail: DocumentDetail = {
 		id,
 		title: payload.title,
 		source,
-		fields: {},
 		createdAt: now,
 		updatedAt: now,
+		data,
 	};
 	localStorage.setItem(key, JSON.stringify(documentDetail));
 	const documentInfo: DocumentInfo = {
@@ -85,7 +95,7 @@ export async function updateLocalDocument(id: string, fields: Record<string, str
 	const raw = localStorage.getItem(key);
 	if (!raw) return;
 	const doc = JSON.parse(raw) as DocumentDetail;
-	doc.fields = { ...doc.fields, ...fields };
+	doc.data.fieldValues = { ...doc.data.fieldValues, ...fields };
 	doc.updatedAt = new Date().toISOString();
 	localStorage.setItem(key, JSON.stringify(doc));
 }

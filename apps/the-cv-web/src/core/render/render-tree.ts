@@ -1,6 +1,7 @@
 import type { Value } from "../document";
 
 export interface ResolvedStyleProps {
+	position?: "absolute" | "relative" | "static";
 	width?: number | string;
 	height?: number | string;
 	padding?: number;

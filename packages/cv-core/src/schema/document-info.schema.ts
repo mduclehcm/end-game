@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DocumentSourceSchema } from "./common";
+import { DocumentSourceSchema } from "./common.schema";
 
 export const DocumentInfoSchema = z.object({
 	id: z.string().length(10),

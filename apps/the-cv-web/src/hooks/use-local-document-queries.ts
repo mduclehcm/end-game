@@ -1,8 +1,9 @@
-import type { CreateDocumentPayload, DocumentDetail, DocumentInfo } from "@algo/cv-core";
+import type { DocumentDetail, DocumentInfo } from "@algo/cv-core";
 import type { UseMutationOptions, UseQueryOptions } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { documentQueryKeys } from "@/hooks/document-query-keys";
 import { Logger } from "@/lib/logger";
+import type { SaveDocumentPayload } from "@/lib/storage";
 import * as storage from "@/lib/storage";
 
 const logger = new Logger("local-document-queries");
@@ -30,7 +31,7 @@ export function useLocalDocumentDetailQuery(
 }
 
 export function useCreateLocalDocument(
-	options?: UseMutationOptions<DocumentDetail, Error, CreateDocumentPayload, unknown>,
+	options?: UseMutationOptions<DocumentDetail, Error, SaveDocumentPayload, unknown>,
 ) {
 	const queryClient = useQueryClient();
 	return useMutation({

@@ -1,4 +1,5 @@
-import type { DateRange, FieldValue, SelectOption, TextStyle } from "@/core/document";
+import type { DateRange, FieldSchema, FieldValue, SelectOption, TextStyle } from "@/core/document";
+import { FieldType } from "@/core/document";
 
 export function textStyleToCSS(style?: TextStyle): React.CSSProperties {
 	if (!style) return {};

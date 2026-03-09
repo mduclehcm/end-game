@@ -1,4 +1,4 @@
-import { BuilderFieldInput } from "../input";
+import { BuilderRichTextInput } from "../input";
 import { Section } from "../section";
 
 export function ProfessionalSummaryFormSection() {
@@ -10,11 +10,12 @@ export function ProfessionalSummaryFormSection() {
 			draggable={false}
 		>
 			{() => (
-				<BuilderFieldInput
+				<BuilderRichTextInput
 					className="col-span-2 my-2"
 					name="professional-summary"
 					label="Professional Summary"
-					field="summary.text"
+					placeholder="e.g. Senior engineer with 10+ years…"
+					field="content.summary.text"
 				/>
 			)}
 		</Section>

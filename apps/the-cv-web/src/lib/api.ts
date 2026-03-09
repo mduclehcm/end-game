@@ -11,6 +11,11 @@ import type {
 
 const BASE_URL = "/api/v1";
 
+export interface ParsedResumeResponse {
+	title?: string;
+	fieldValues: Record<string, string>;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(`${BASE_URL}${path}`, {
 		headers: { "Content-Type": "application/json", ...init?.headers },
@@ -20,6 +25,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 		throw new Error(`API ${res.status}: ${res.statusText}`);
 	}
 	return res.json() as Promise<T>;
+}
+
+export async function parsePdfResume(file: File): Promise<ParsedResumeResponse> {
+	const formData = new FormData();
+	formData.append("file", file);
+	const res = await fetch(`${BASE_URL}/documents/parse-pdf`, {
+		method: "POST",
+		body: formData,
+	});
+	if (!res.ok) {
+		throw new Error(`API ${res.status}: ${res.statusText}`);
+	}
+	const json = (await res.json()) as { data: ParsedResumeResponse };
+	return json.data;
 }
 
 export function fetchCloudDocumentList(): Promise<DocumentInfo[]> {

@@ -2,16 +2,20 @@ import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { getArrayIndices, useBuilderStore } from "@/store";
-import { BuilderFieldInput } from "../input";
+import { BuilderFieldInput, BuilderRichTextInput } from "../input";
 import { Section } from "../section";
 import type { SectionProps } from "./share";
 
-export function EducationFormSection({ isDragging }: SectionProps) {
-	const fields = useBuilderStore((state) => state.fields);
+export function EducationFormSection({ sectionId, isDragging }: SectionProps) {
+	const fields = useBuilderStore((state) => state.data.fieldValues);
+	const sections = useBuilderStore((state) => state.data.sections);
 	const addArrayItem = useBuilderStore((state) => state.addArrayItem);
 	const removeArrayItem = useBuilderStore((state) => state.removeArrayItem);
 
-	const indices = useMemo(() => getArrayIndices(fields, "education"), [fields]);
+	const indices = useMemo(
+		() => (sectionId ? getArrayIndices(fields, sectionId, sections) : [0]),
+		[fields, sectionId, sections],
+	);
 
 	return (
 		<Section
@@ -27,13 +31,13 @@ export function EducationFormSection({ isDragging }: SectionProps) {
 						<div key={index} className="col-span-2 flex flex-col gap-4 rounded-lg border border-border bg-muted/30 p-3">
 							<div className="flex items-center justify-between gap-2">
 								<span className="text-xs font-medium text-muted-foreground">Education #{index + 1}</span>
-								{indices.length > 1 && (
+								{indices.length > 1 && sectionId && (
 									<Button
 										type="button"
 										variant="ghost"
 										size="icon-xs"
 										aria-label={`Remove education ${index + 1}`}
-										onClick={() => removeArrayItem("education", index)}
+										onClick={() => removeArrayItem(sectionId, index)}
 									>
 										<Trash2Icon className="size-3.5" />
 									</Button>
@@ -44,51 +48,54 @@ export function EducationFormSection({ isDragging }: SectionProps) {
 									className="col-span-2"
 									name={`school-${index}`}
 									label="School"
-									field={`education.${index}.institution`}
+									field={`content.education.${index}.institution`}
 								/>
 								<BuilderFieldInput
 									className="col-span-2"
 									name={`degree-${index}`}
 									label="Degree"
-									field={`education.${index}.degree`}
+									field={`content.education.${index}.degree`}
 								/>
 								<BuilderFieldInput
 									name={`start-date-${index}`}
 									label="Start Date"
-									field={`education.${index}.startDate`}
+									field={`content.education.${index}.startDate`}
 									placeholder="YYYY-MM-DD"
 								/>
 								<BuilderFieldInput
 									name={`end-date-${index}`}
 									label="End Date"
-									field={`education.${index}.endDate`}
+									field={`content.education.${index}.endDate`}
 									placeholder="YYYY-MM-DD"
 								/>
 								<BuilderFieldInput
 									className="col-span-2"
 									name={`city-${index}`}
 									label="City"
-									field={`education.${index}.city`}
+									field={`content.education.${index}.city`}
 								/>
-								<BuilderFieldInput
+								<BuilderRichTextInput
 									className="col-span-2"
 									name={`description-${index}`}
 									label="Description"
-									field={`education.${index}.description`}
+									field={`content.education.${index}.description`}
+									placeholder="Focus areas, achievements, activities…"
 								/>
 							</div>
 						</div>
 					))}
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						className="col-span-2 gap-1.5"
-						onClick={() => addArrayItem("education")}
-					>
-						<PlusIcon className="size-3.5" />
-						Add education
-					</Button>
+					{sectionId && (
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							className="col-span-2 gap-1.5"
+							onClick={() => addArrayItem(sectionId)}
+						>
+							<PlusIcon className="size-3.5" />
+							Add education
+						</Button>
+					)}
 				</>
 			)}
 		</Section>

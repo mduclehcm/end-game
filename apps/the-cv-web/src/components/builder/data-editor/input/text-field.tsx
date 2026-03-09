@@ -11,7 +11,7 @@ type BuilderFieldInputProps = {
 };
 
 export function BuilderFieldInput({ className, name, label, placeholder, field }: BuilderFieldInputProps) {
-	const value = useBuilderStore((state) => state.fields[field] ?? "");
+	const value = useBuilderStore((state) => state.data.fieldValues[field] ?? "");
 	const setValue = useBuilderStore((state) => state.setFieldValue);
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setValue(field, e.target.value);

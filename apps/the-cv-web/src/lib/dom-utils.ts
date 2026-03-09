@@ -25,10 +25,18 @@ function applyStylesToElement(el: HTMLElement, style: ResolvedStyleProps): void 
 
 export function measureTextHeight(content: string, width: number, style: ResolvedStyleProps): number {
 	const container = document.createElement("div");
+	container.style.position = "absolute";
+	container.style.visibility = "hidden";
+	container.style.pointerEvents = "none";
+	container.style.left = "-9999px";
+	container.style.top = "0";
 	container.style.width = `${width}px`;
 	container.style.boxSizing = "border-box";
 	container.style.overflow = "hidden";
 	container.innerHTML = content;
 	applyStylesToElement(container, style);
-	return container.offsetHeight;
+	document.body.appendChild(container);
+	const height = container.offsetHeight;
+	container.remove();
+	return height;
 }

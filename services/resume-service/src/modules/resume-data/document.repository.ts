@@ -2,7 +2,6 @@ import type { CreateDocumentPayload, DocumentDetail, DocumentInfo, UpdateDocumen
 import { Inject, Injectable } from "@nestjs/common";
 import { eq, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { nanoid } from "nanoid";
 import { DRIZZLE } from "../../database/database.provider";
 import * as schema from "../../database/schema";
 import { DocumentsTable } from "../../database/schema";
@@ -26,6 +25,7 @@ export class DocumentRepository {
 	}
 
 	async create(payload: CreateDocumentPayload): Promise<DocumentDetail | null> {
+		const { nanoid } = await import("nanoid");
 		const results = await this.db
 			.insert(DocumentsTable)
 			.values({

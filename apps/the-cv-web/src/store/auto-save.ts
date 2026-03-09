@@ -34,7 +34,7 @@ export function setupAutoSave(store: BuilderStore, throttleMs = 250) {
 		const state = store.getState();
 		if (!state.documentId) return;
 
-		const changed = getChangedFields(state.fields, baselineFields);
+		const changed = getChangedFields(state.data.fieldValues, baselineFields);
 		if (!changed) {
 			state.setSaveStatus("idle");
 			return;
@@ -47,7 +47,7 @@ export function setupAutoSave(store: BuilderStore, throttleMs = 250) {
 
 		save
 			.then(() => {
-				baselineFields = { ...store.getState().fields };
+				baselineFields = { ...store.getState().data.fieldValues };
 				store.getState().setSaveStatus("saved");
 			})
 			.catch((err) => logger.errorObj("auto-save failed", err));
@@ -74,12 +74,12 @@ export function setupAutoSave(store: BuilderStore, throttleMs = 250) {
 	store.subscribe(
 		(state) => state.documentId,
 		() => {
-			baselineFields = { ...store.getState().fields };
+			baselineFields = { ...store.getState().data.fieldValues };
 		},
 	);
 
 	store.subscribe(
-		(state) => state.fields,
+		(state) => state.data.fieldValues,
 		() => {
 			const { documentId } = store.getState();
 			if (!documentId) return;

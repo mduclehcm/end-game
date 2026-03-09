@@ -1,5 +1,6 @@
 export interface StyleProps {
 	// Layout
+	position?: Value<"absolute" | "relative" | "static">;
 	width?: Value<number | string>;
 	height?: Value<number | string>;
 	padding?: Value<SpaceValue>;
@@ -97,7 +98,15 @@ export interface ConditionalNode {
 	children: LayoutNode[];
 }
 
-export type LayoutNode = LayoutBoxNode | LayoutTextNode | RichTextNode | ImageNode | RepeatNode | ConditionalNode;
+export type LayoutNode =
+	| RowNode
+	| ColumnNode
+	| LayoutBoxNode
+	| LayoutTextNode
+	| RichTextNode
+	| ImageNode
+	| RepeatNode
+	| ConditionalNode;
 
 export type SpaceValue =
 	| {

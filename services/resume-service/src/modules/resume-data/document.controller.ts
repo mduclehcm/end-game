@@ -5,14 +5,47 @@ import {
 	GetDocumentResponse,
 	UpdateDocumentResponse,
 } from "@algo/cv-core";
-import { Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post } from "@nestjs/common";
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	InternalServerErrorException,
+	Param,
+	Patch,
+	Post,
+	UploadedFile,
+	UseInterceptors,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import multer from "multer";
 import { DocumentService } from "./document.service";
 import { CreateDocumentPayloadDto } from "./dto/create-document.dto";
+import type { ParsedResumeDto } from "./dto/parsed-resume.dto";
 import { UpdateDocumentPayloadDto } from "./dto/update-document.dto";
+import { ParsePdfService } from "./parse-pdf.service";
 
 @Controller("documents")
 export class DocumentController {
-	constructor(private readonly documentService: DocumentService) {}
+	constructor(
+		private readonly documentService: DocumentService,
+		private readonly parsePdfService: ParsePdfService,
+	) {}
+
+	@Post("parse-pdf")
+	@UseInterceptors(
+		FileInterceptor("file", {
+			storage: multer.memoryStorage(),
+			limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+		}),
+	)
+	async parsePdf(@UploadedFile() file: Express.Multer.File): Promise<{ data: ParsedResumeDto }> {
+		if (!file?.buffer) {
+			throw new InternalServerErrorException("No file uploaded");
+		}
+		const data = await this.parsePdfService.parsePdf(file.buffer);
+		return { data };
+	}
 
 	@Get()
 	async findAll(): Promise<GetDocumentListResponse> {

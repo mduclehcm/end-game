@@ -20,8 +20,12 @@ export function toDocumentDetail(row: DocumentRow): DocumentDetail {
 		id: row.id,
 		title: row.title,
 		source: DocumentSource.Cloud,
-		fields: row.fields,
 		createdAt: row.createdAt.toISOString(),
 		updatedAt: row.updatedAt.toISOString(),
+		data: {
+			sectionIds: [],
+			sections: [],
+			fieldValues: (row.fields ?? {}) as Record<string, string>,
+		},
 	};
 }

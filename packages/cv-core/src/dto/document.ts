@@ -1,5 +1,5 @@
-import type { DocumentDetail } from "../entity/document-detail";
-import type { DocumentInfo } from "../entity/document-info";
+import type { DocumentDetail } from "../schema/document-detail.schema";
+import type { DocumentInfo } from "../schema/document-info.schema";
 import type { DeleteItemResponse, ListResponse, SingleResponse } from "./common";
 
 export interface CreateDocumentPayload {

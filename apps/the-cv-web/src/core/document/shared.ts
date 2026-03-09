@@ -29,6 +29,20 @@ export interface SelectOption {
 	value: string;
 }
 
+/** Value that a form field can hold (string, number, date range, select, array, or empty). */
+export type FieldValue = string | number | DateRange | SelectOption | unknown[] | null | undefined;
+
+export const FieldType = {
+	DATE_RANGE: "date_range",
+	RATING: "rating",
+} as const;
+
+export type FieldTypeValue = (typeof FieldType)[keyof typeof FieldType];
+
+export interface FieldSchema {
+	type: string;
+}
+
 export interface ValidationRule {
 	type: "min" | "max" | "pattern" | "custom";
 	value: string | number;
