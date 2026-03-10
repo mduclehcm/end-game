@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { cn } from "@/lib/utils";
 import { fieldPath } from "@/core/layout/document-view";
+import { cn } from "@/lib/utils";
 import { getOrderedEntities, useBuilderStore } from "@/store";
 import { BuilderFieldInput } from "../input";
 import { Section } from "../section";
@@ -11,7 +11,7 @@ export function PersonalDetailsFormSection() {
 	const section = useMemo(() => data.sections.find((s) => s.kind === "personal"), [data.sections]);
 	const entity = section ? getOrderedEntities(section)[0] : undefined;
 	const fields = entity?.fields ?? [];
-
+	console.debug("fields", fields);
 	return (
 		<Section
 			name="personal-details"

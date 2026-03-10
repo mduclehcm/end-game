@@ -21,7 +21,7 @@ export function ProfessionalSummaryFormSection() {
 			{() =>
 				textField && section && entity ? (
 					<BuilderRichTextInput
-						className="col-span-2 my-2"
+						className="col-span-2 my-4"
 						name="professional-summary"
 						label="Professional Summary"
 						placeholder="e.g. Senior engineer with 10+ years…"

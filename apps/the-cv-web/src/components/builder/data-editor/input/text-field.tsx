@@ -39,11 +39,9 @@ export function BuilderFieldInput({ className, name, label, placeholder, field, 
 	}, [dataKey, activeField]);
 
 	return (
-		<div ref={wrapperRef} data-data-key={dataKey ?? undefined}>
-			<Field className={className}>
-				<FieldLabel htmlFor={name}>{label}</FieldLabel>
-				<Input id={name} placeholder={placeholder} value={value} onChange={handleChange} onFocus={handleFocus} />
-			</Field>
-		</div>
+		<Field ref={wrapperRef} className={className} data-data-key={dataKey ?? undefined}>
+			<FieldLabel htmlFor={name}>{label}</FieldLabel>
+			<Input id={name} placeholder={placeholder} value={value} onChange={handleChange} onFocus={handleFocus} />
+		</Field>
 	);
 }

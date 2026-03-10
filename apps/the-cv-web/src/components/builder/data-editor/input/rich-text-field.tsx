@@ -147,75 +147,73 @@ export function BuilderRichTextInput({
 	const showAiDisabled = canShowAi && !isOnline;
 
 	return (
-		<div ref={wrapperRef} data-data-key={dataKey ?? undefined}>
-			<Field className={cn("flex flex-col gap-2", className)}>
-				<FieldLabel htmlFor={name}>{label}</FieldLabel>
-				<div className="overflow-hidden rounded-md border border-input">
-					{editor && (
-						<div className="flex flex-wrap items-center gap-0.5 border-b border-input bg-muted/50 p-1">
+		<Field ref={wrapperRef} className={cn("flex flex-col gap-2", className)} data-data-key={dataKey ?? undefined}>
+			<FieldLabel htmlFor={name}>{label}</FieldLabel>
+			<div className="overflow-hidden rounded-md border border-input">
+				{editor && (
+					<div className="flex flex-wrap items-center gap-0.5 border-b border-input bg-muted/50 p-1">
+						<ToolbarButton
+							editor={editor}
+							onClick={() => editor.chain().focus().toggleBold().run()}
+							active={editor.isActive("bold")}
+							title="Bold"
+							icon={<BoldIcon />}
+						/>
+						<ToolbarButton
+							editor={editor}
+							onClick={() => editor.chain().focus().toggleItalic().run()}
+							active={editor.isActive("italic")}
+							title="Italic"
+							icon={<ItalicIcon />}
+						/>
+						<ToolbarButton
+							editor={editor}
+							onClick={() => editor.chain().focus().toggleBulletList().run()}
+							active={editor.isActive("bulletList")}
+							title="Bullet list"
+							icon={<ListIcon />}
+						/>
+						<ToolbarButton
+							editor={editor}
+							onClick={() => editor.chain().focus().toggleOrderedList().run()}
+							active={editor.isActive("orderedList")}
+							title="Numbered list"
+							icon={<ListOrderedIcon />}
+						/>
+						{showAiReview && (
 							<ToolbarButton
 								editor={editor}
-								onClick={() => editor.chain().focus().toggleBold().run()}
-								active={editor.isActive("bold")}
-								title="Bold"
-								icon={<BoldIcon />}
+								onClick={handleAiReview}
+								active={false}
+								disabled={rewriteLoading}
+								title={rewriteError ?? "AI review"}
+								icon={
+									rewriteLoading ? (
+										<span className="size-4 animate-pulse rounded bg-muted-foreground/50" />
+									) : (
+										<SparklesIcon />
+									)
+								}
 							/>
+						)}
+						{showAiDisabled && (
 							<ToolbarButton
 								editor={editor}
-								onClick={() => editor.chain().focus().toggleItalic().run()}
-								active={editor.isActive("italic")}
-								title="Italic"
-								icon={<ItalicIcon />}
+								onClick={() => {}}
+								active={false}
+								disabled
+								title="AI review is available when online"
+								icon={<SparklesIcon />}
 							/>
-							<ToolbarButton
-								editor={editor}
-								onClick={() => editor.chain().focus().toggleBulletList().run()}
-								active={editor.isActive("bulletList")}
-								title="Bullet list"
-								icon={<ListIcon />}
-							/>
-							<ToolbarButton
-								editor={editor}
-								onClick={() => editor.chain().focus().toggleOrderedList().run()}
-								active={editor.isActive("orderedList")}
-								title="Numbered list"
-								icon={<ListOrderedIcon />}
-							/>
-							{showAiReview && (
-								<ToolbarButton
-									editor={editor}
-									onClick={handleAiReview}
-									active={false}
-									disabled={rewriteLoading}
-									title={rewriteError ?? "AI review"}
-									icon={
-										rewriteLoading ? (
-											<span className="size-4 animate-pulse rounded bg-muted-foreground/50" />
-										) : (
-											<SparklesIcon />
-										)
-									}
-								/>
-							)}
-							{showAiDisabled && (
-								<ToolbarButton
-									editor={editor}
-									onClick={() => {}}
-									active={false}
-									disabled
-									title="AI review is available when online"
-									icon={<SparklesIcon />}
-								/>
-							)}
-						</div>
-					)}
-					{rewriteError && (
-						<p className="border-input bg-destructive/10 px-2 py-1 text-destructive text-xs">{rewriteError}</p>
-					)}
-					<EditorContent editor={editor} />
-				</div>
-			</Field>
-		</div>
+						)}
+					</div>
+				)}
+				{rewriteError && (
+					<p className="border-input bg-destructive/10 px-2 py-1 text-destructive text-xs">{rewriteError}</p>
+				)}
+				<EditorContent editor={editor} />
+			</div>
+		</Field>
 	);
 }
 

@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { useMemo } from "react";
+import { forwardRef, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -60,21 +60,21 @@ const fieldVariants = cva("data-[invalid=true]:text-destructive gap-2 group/fiel
 	},
 });
 
-function Field({
-	className,
-	orientation = "vertical",
-	...props
-}: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
-	return (
-		<div
-			role="group"
-			data-slot="field"
-			data-orientation={orientation}
-			className={cn(fieldVariants({ orientation }), className)}
-			{...props}
-		/>
-	);
-}
+const Field = forwardRef<HTMLDivElement, React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>>(
+	function Field(props, ref) {
+		const { className, orientation = "vertical", ...rest } = props;
+		return (
+			<div
+				ref={ref}
+				role="group"
+				data-slot="field"
+				data-orientation={orientation}
+				className={cn(fieldVariants({ orientation }), className)}
+				{...rest}
+			/>
+		);
+	},
+);
 
 function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
 	return (
