@@ -42,7 +42,11 @@ function DomRenderer({ node }: DomRendererProps) {
 			if (node.src.kind === "fixed") {
 				return <TextNodeRenderer text={node.src.value} />;
 			}
-			return <BoundValueRenderer dataKey={node.src.key} />;
+			if (node.src.kind === "bind") {
+				return <BoundValueRenderer dataKey={node.src.key} />;
+			}
+			// computed: not resolved in preview (no document/tokens here)
+			return <TextNodeRenderer text="" />;
 		}
 		default:
 			return null;

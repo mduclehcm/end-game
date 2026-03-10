@@ -1,69 +1,106 @@
-import type { DocumentData } from "@algo/cv-core";
+import type { DocumentData, Entity, Section } from "@algo/cv-core";
 import { nanoid } from "nanoid";
+import { createFieldsFromTemplate, ENTITY_FIELD_TEMPLATES } from "@/data/entity-field-templates";
 import { getDefaultDocument } from "./default-cv";
 
-/** Sortable section kinds used in DataEditor (experience, education, skills, settings). */
+/** Section kinds: static (personal, summary), array (experience, education, skills, languages), settings. */
+const SECTION_KINDS = ["personal", "summary", "experience", "education", "skills", "languages", "settings"] as const;
+
+/** Kinds that appear in the sortable builder list. */
 const SORTABLE_SECTION_KINDS = ["experience", "education", "skills", "settings"] as const;
 
-/**
- * Returns DocumentData with the same section structure as the example CV
- * but all section/content field values set to empty string.
- * Use for "Create blank CV" so the builder shows all sections with empty data.
- */
-export function getBlankDocumentData(): DocumentData {
+function fieldPath(section: Section, entityIndex: number, fieldKey: string, multiEntity: boolean): string {
+	const kind = section.kind;
+	if (kind === "settings") return `settings.${fieldKey}`;
+	if (!multiEntity) return `content.${kind}.${fieldKey}`;
+	return `content.${kind}.${entityIndex}.${fieldKey}`;
+}
+
+function buildSectionsWithEntities(initialByPath: Record<string, string>): {
+	sections: DocumentData["sections"];
+	sectionIds: string[];
+	fieldValues: Record<string, string>;
+} {
 	const sectionIds: string[] = [];
 	const sections: DocumentData["sections"] = [];
+	const fieldValues: Record<string, string> = {};
 
-	for (const kind of SORTABLE_SECTION_KINDS) {
-		const id = nanoid(10);
-		sectionIds.push(id);
+	for (const kind of SECTION_KINDS) {
+		const template = ENTITY_FIELD_TEMPLATES[kind];
+		if (!template) {
+			const id = nanoid(10);
+			sectionIds.push(id);
+			sections.push({ id, kind, entityIds: [], entities: [] });
+			continue;
+		}
+
+		const sectionId = nanoid(10);
+		sectionIds.push(sectionId);
+
+		// Number of entities: from initialByPath for array sections, else 1
+		let entityCount = 1;
+		if (["experience", "education", "skills", "languages"].includes(kind)) {
+			const prefix = `content.${kind}.`;
+			const indices = new Set<number>();
+			for (const key of Object.keys(initialByPath)) {
+				if (!key.startsWith(prefix)) continue;
+				const rest = key.slice(prefix.length);
+				const m = /^(\d+)\./.exec(rest);
+				if (m) indices.add(parseInt(m[1], 10));
+			}
+			entityCount = indices.size > 0 ? Math.max(...indices) + 1 : 1;
+		}
+
+		const entities: Entity[] = [];
+		const entityIds: string[] = [];
+		const isArraySection = ["experience", "education", "skills", "languages"].includes(kind);
+		const multiEntity = isArraySection && entityCount > 1;
+
+		for (let ei = 0; ei < entityCount; ei++) {
+			const entityId = nanoid(10);
+			entityIds.push(entityId);
+			const fields = createFieldsFromTemplate(template);
+			const entity: Entity = { id: entityId, kind, fields };
+			entities.push(entity);
+
+			for (const field of entity.fields) {
+				const path = fieldPath(
+					{ id: sectionId, kind, entityIds, entities } as Section,
+					ei,
+					field.key ?? field.id,
+					multiEntity,
+				);
+				fieldValues[field.id] = initialByPath[path] ?? "";
+			}
+		}
+
 		sections.push({
-			id,
+			id: sectionId,
 			kind,
-			entityIds: [],
-			entities: [],
+			entityIds,
+			entities,
 		});
 	}
 
-	// Same keys as default document but all content empty; keep settings so layout works.
-	// All keys use prefixes: content.* for content, settings.* for settings.
-	const fieldValues: Record<string, string> = {
-		"content.personal.firstName": "",
-		"content.personal.lastName": "",
-		"content.personal.title": "",
-		"content.personal.email": "",
-		"content.personal.phone": "",
-		"content.personal.location": "",
-		"content.personal.postalCode": "",
-		"content.personal.country": "",
-		"content.personal.linkedin": "",
-		"content.personal.address": "",
-		"content.personal.nationality": "",
-		"content.personal.placeOfBirth": "",
-		"content.personal.drivingLicense": "",
-		"content.personal.dateOfBirth": "",
-		"content.summary.text": "",
-		"content.experience.0.position": "",
-		"content.experience.0.company": "",
-		"content.experience.0.startDate": "",
-		"content.experience.0.endDate": "",
-		"content.experience.0.location": "",
-		"content.experience.0.description": "",
-		"content.education.0.institution": "",
-		"content.education.0.degree": "",
-		"content.education.0.startDate": "",
-		"content.education.0.endDate": "",
-		"content.education.0.city": "",
-		"content.education.0.description": "",
-		"content.skills.0.skill": "",
-		"content.languages.0.language": "",
-		"settings.templateId": "default-simple",
-		"settings.pageSize": "A4",
-		"settings.pageMargins.top": "20",
-		"settings.pageMargins.right": "20",
-		"settings.pageMargins.bottom": "20",
-		"settings.pageMargins.left": "20",
-	};
+	return { sectionIds, sections, fieldValues };
+}
+
+/**
+ * Returns DocumentData with dynamic sections, entities, and fields.
+ * fieldValues is a map from field id to value.
+ * Use for "Create blank CV" with empty string values.
+ */
+export function getBlankDocumentData(): DocumentData {
+	const initialByPath: Record<string, string> = {};
+	// Ensure at least one entity per array section and settings
+	initialByPath["settings.templateId"] = "default-simple";
+	initialByPath["settings.pageSize"] = "A4";
+	initialByPath["settings.pageMargins.top"] = "20";
+	initialByPath["settings.pageMargins.right"] = "20";
+	initialByPath["settings.pageMargins.bottom"] = "20";
+	initialByPath["settings.pageMargins.left"] = "20";
+
+	const { sectionIds, sections, fieldValues } = buildSectionsWithEntities(initialByPath);
 
 	return {
 		sectionIds,
@@ -73,25 +110,12 @@ export function getBlankDocumentData(): DocumentData {
 }
 
 /**
- * Returns full DocumentData for the example CV: default fieldValues plus
- * sectionIds/sections so the builder shows all sortable sections.
+ * Returns full DocumentData for the example CV: same structure as blank but
+ * fieldValues filled from getDefaultDocument() (path-based keys mapped to field ids via structure).
  */
 export function getDefaultDocumentData(): DocumentData {
-	const fieldValues = getDefaultDocument();
-	const sectionIds: string[] = [];
-	const sections: DocumentData["sections"] = [];
-
-	for (const kind of SORTABLE_SECTION_KINDS) {
-		const id = nanoid(10);
-		sectionIds.push(id);
-		sections.push({
-			id,
-			kind,
-			entityIds: [],
-			entities: [],
-		});
-	}
-
+	const initialByPath = getDefaultDocument();
+	const { sectionIds, sections, fieldValues } = buildSectionsWithEntities(initialByPath);
 	return {
 		sectionIds,
 		sections,
@@ -104,8 +128,8 @@ const ARRAY_SECTION_KEY = /^content\.(experience|education|skills|languages)\.(\
 const SETTINGS_KEY_PREFIX = "settings.";
 
 /**
- * Derives sectionIds and sections from fieldValues when they are missing.
- * Used when loading a document that only has fieldValues (e.g. from PDF import or example CV).
+ * Derives sectionIds and sections from path-based fieldValues when loading legacy data.
+ * Creates sections with empty entities; caller may later migrate to id-based fieldValues.
  */
 export function buildDocumentDataFromFieldValues(fieldValues: Record<string, string>): DocumentData {
 	const sectionIds: string[] = [];
@@ -141,8 +165,7 @@ export function buildDocumentDataFromFieldValues(fieldValues: Record<string, str
 		}
 	}
 
-	// Ensure stable order: experience, education, skills, languages, settings (match DataEditor order)
-	const order = ["experience", "education", "skills", "languages", "settings"] as const;
+	const order = ["personal", "summary", "experience", "education", "skills", "languages", "settings"] as const;
 	const orderedIds: string[] = [];
 	const orderedSections: DocumentData["sections"] = [];
 	for (const kind of order) {
@@ -152,7 +175,6 @@ export function buildDocumentDataFromFieldValues(fieldValues: Record<string, str
 		orderedIds.push(sectionIds[idx]);
 		orderedSections.push(sections[idx]);
 	}
-	// Add any kind not in order (e.g. settings) at the end
 	for (let i = 0; i < sectionIds.length; i++) {
 		if (orderedIds.includes(sectionIds[i])) continue;
 		orderedIds.push(sectionIds[i]);
@@ -167,12 +189,13 @@ export function buildDocumentDataFromFieldValues(fieldValues: Record<string, str
 }
 
 /**
- * Normalizes document data: if sectionIds/sections are empty but fieldValues exist,
- * derives sectionIds/sections from fieldValues so the builder renders correctly.
+ * Normalizes document data: if sectionIds/sections are empty (e.g. new CV),
+ * returns default blank structure. Server data always has section/entity data.
  */
 export function normalizeDocumentData(data: DocumentData): DocumentData {
-	const hasFieldValues = Object.keys(data.fieldValues).length > 0;
-	const needsDerivation = data.sectionIds.length === 0 && data.sections.length === 0 && hasFieldValues;
-	if (!needsDerivation) return data;
-	return buildDocumentDataFromFieldValues(data.fieldValues);
+	const hasNoStructure = data.sectionIds.length === 0 && data.sections.length === 0;
+	if (!hasNoStructure) return data;
+	return getBlankDocumentData();
 }
+
+export { SORTABLE_SECTION_KINDS };

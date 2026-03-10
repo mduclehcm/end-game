@@ -1,3 +1,4 @@
+import type { SpaceBox } from "@/core/render/render-tree";
 import type {
 	BlockBoxNode,
 	BoxNode,
@@ -15,6 +16,92 @@ import type {
 	FragmentTextContent,
 	PageFragment,
 } from "./fragment-tree";
+
+/**
+ * Convert a fully-measured BoxNode into a Fragment without modifying pagination state.
+ * Used to build children of unbreakable inline containers (e.g. flex-row) without
+ * advancing the page cursor.
+ */
+function emitBoxAsFragment(node: BoxNode, x: number, y: number, pageIndex: number): Fragment {
+	if (node.contentType === "text") {
+		const textNode = node as TextBoxNode;
+		const lineCount = textNode.text.lineCount ?? 1;
+		return {
+			id: nextFragmentId(),
+			pageIndex,
+			position: "flow",
+			x,
+			y,
+			width: textNode.size.width,
+			height: textNode.size.height,
+			content: {
+				kind: "text",
+				fullContent: textNode.text.content,
+				lineStart: 0,
+				lineCount,
+				style: textNode.style,
+				isHtml: textNode.text.isHtml ?? false,
+				...(textNode.dataKey !== undefined && { dataKey: textNode.dataKey }),
+			},
+			nextFragmentId: null,
+		};
+	}
+
+	if (node.contentType === "image") {
+		const imgNode = node as ImageBoxNode;
+		return {
+			id: nextFragmentId(),
+			pageIndex,
+			position: "flow",
+			x,
+			y,
+			width: imgNode.size.width,
+			height: imgNode.size.height,
+			content: {
+				kind: "image",
+				src: imgNode.src,
+				alt: imgNode.alt,
+				style: imgNode.style,
+				...(imgNode.dataKey !== undefined && { dataKey: imgNode.dataKey }),
+			},
+			nextFragmentId: null,
+		};
+	}
+
+	const container = node as BlockBoxNode | FlexRowBoxNode | FlexColumnBoxNode;
+	const padding = getPadding(container.style);
+	const isRow = container.kind === "flex-row";
+	const children: Fragment[] = [];
+
+	if (isRow) {
+		const rowNode = container as FlexRowBoxNode;
+		let childX = x + padding.left;
+		const childY = y + padding.top;
+		for (const child of rowNode.children) {
+			children.push(emitBoxAsFragment(child, childX, childY, pageIndex));
+			childX += child.size.width + rowNode.gap;
+		}
+	} else {
+		const gapVal = container.kind === "flex-column" ? (container as FlexColumnBoxNode).gap : 0;
+		let childY = y + padding.top;
+		for (const child of (container as BlockBoxNode | FlexColumnBoxNode).children) {
+			children.push(emitBoxAsFragment(child, x + padding.left, childY, pageIndex));
+			childY += child.size.height + gapVal;
+		}
+	}
+
+	return {
+		id: nextFragmentId(),
+		pageIndex,
+		position: "flow",
+		x,
+		y,
+		width: node.size.width,
+		height: node.size.height,
+		content: { kind: "block", children, isRow },
+		nextFragmentId: null,
+	};
+}
 
 let fragmentIdCounter = 0;
 function nextFragmentId(): string {
@@ -35,6 +122,8 @@ function ensurePage(state: PaginationState): void {
 	while (state.pages.length <= state.pageIndex) {
 		state.pages.push({
 			pageIndex: state.pages.length,
+			contentTop: state.rect.contentTop,
+			contentLeft: state.rect.contentLeft,
 			contentWidth: state.rect.contentWidth,
 			contentHeight: state.rect.contentHeight,
 			pageWidthPx: state.rect.pageWidthPx,
@@ -55,8 +144,14 @@ function getPosition(node: BoxNode): FragmentPosition {
 	return node.style?.position === "absolute" ? "absolute" : "flow";
 }
 
-function getMargin(style: { margin?: number } | undefined): number {
-	return typeof style?.margin === "number" ? style.margin : 0;
+const defaultSpaceBox: SpaceBox = { top: 0, right: 0, bottom: 0, left: 0 };
+
+function getMargin(style: { margin?: SpaceBox } | undefined): SpaceBox {
+	return style?.margin ?? defaultSpaceBox;
+}
+
+function getPadding(style: { padding?: SpaceBox } | undefined): SpaceBox {
+	return style?.padding ?? defaultSpaceBox;
 }
 
 function emitFragment(
@@ -140,12 +235,12 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 		const lineHeight = textNode.text.lineHeight;
 		const lineCount = textNode.text.lineCount ?? 1;
 		const totalHeight = textNode.size.height;
-		const padding = typeof textNode.style.padding === "number" ? textNode.style.padding : 0;
+		const padding = getPadding(textNode.style);
 		const isHtml = textNode.text.isHtml ?? false;
 		const margin = getMargin(textNode.style);
-		const totalHeightWithMargin = totalHeight + 2 * margin;
+		const totalHeightWithMargin = totalHeight + margin.top + margin.bottom;
 
-		if (totalHeight <= state.remainingHeight) {
+		if (totalHeightWithMargin <= state.remainingHeight) {
 			const content: FragmentTextContent = {
 				kind: "text",
 				fullContent: textNode.text.content,
@@ -153,6 +248,7 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 				lineCount,
 				style: textNode.style,
 				isHtml,
+				...(textNode.dataKey !== undefined && { dataKey: textNode.dataKey }),
 			};
 			emitFragment(state, getPosition(textNode), x, state.y, textNode.size.width, totalHeightWithMargin, content, null);
 			state.y += totalHeightWithMargin;
@@ -160,13 +256,16 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 			return;
 		}
 
-		const linesThatFit = Math.max(0, Math.floor((state.remainingHeight - 2 * padding - 2 * margin) / lineHeight));
+		const linesThatFit = Math.max(
+			0,
+			Math.floor((state.remainingHeight - padding.top - padding.bottom - margin.top - margin.bottom) / lineHeight),
+		);
 		if (linesThatFit <= 0) {
 			newPage(state);
 		}
 		const firstPartLines = linesThatFit <= 0 ? lineCount : linesThatFit;
-		const firstPartHeight = firstPartLines * lineHeight + 2 * padding;
-		const firstPartHeightWithMargin = firstPartHeight + 2 * margin;
+		const firstPartHeight = firstPartLines * lineHeight + padding.top + padding.bottom;
+		const firstPartHeightWithMargin = firstPartHeight + margin.top + margin.bottom;
 		const firstContent: FragmentTextContent = {
 			kind: "text",
 			fullContent: textNode.text.content,
@@ -174,6 +273,7 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 			lineCount: firstPartLines,
 			style: textNode.style,
 			isHtml,
+			...(textNode.dataKey !== undefined && { dataKey: textNode.dataKey }),
 		};
 		const frag1 = emitFragment(
 			state,
@@ -191,8 +291,8 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 		const restLines = lineCount - firstPartLines;
 		if (restLines > 0) {
 			newPage(state);
-			const restHeight = restLines * lineHeight + 2 * padding;
-			const restHeightWithMargin = restHeight + 2 * margin;
+			const restHeight = restLines * lineHeight + padding.top + padding.bottom;
+			const restHeightWithMargin = restHeight + margin.top + margin.bottom;
 			const restContent: FragmentTextContent = {
 				kind: "text",
 				fullContent: textNode.text.content,
@@ -200,6 +300,7 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 				lineCount: restLines,
 				style: textNode.style,
 				isHtml,
+				...(textNode.dataKey !== undefined && { dataKey: textNode.dataKey }),
 			};
 			const frag2 = emitFragment(
 				state,
@@ -221,7 +322,7 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 	if (node.contentType === "image") {
 		const imgNode = node as ImageBoxNode;
 		const margin = getMargin(imgNode.style);
-		const heightWithMargin = imgNode.size.height + 2 * margin;
+		const heightWithMargin = imgNode.size.height + margin.top + margin.bottom;
 		emitFragment(
 			state,
 			getPosition(imgNode),
@@ -234,6 +335,7 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 				src: imgNode.src,
 				alt: imgNode.alt,
 				style: imgNode.style,
+				...(imgNode.dataKey !== undefined && { dataKey: imgNode.dataKey }),
 			},
 			null,
 		);
@@ -242,11 +344,53 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 		return;
 	}
 
+	// Flex-row: emit all children side-by-side as a single atomic block fragment
+	if (node.kind === "flex-row") {
+		const rowNode = node as FlexRowBoxNode;
+		const margin = getMargin(rowNode.style);
+		const padding = getPadding(rowNode.style);
+
+		if (margin.top > 0) {
+			state.y += margin.top;
+			state.remainingHeight -= margin.top;
+		}
+
+		const rowY = state.y;
+		let childX = x + padding.left;
+		const childY = rowY + padding.top;
+		const children: Fragment[] = [];
+
+		for (const child of rowNode.children) {
+			children.push(emitBoxAsFragment(child, childX, childY, state.pageIndex));
+			childX += child.size.width + rowNode.gap;
+		}
+
+		emitFragment(
+			state,
+			getPosition(rowNode),
+			x,
+			rowY,
+			rowNode.size.width,
+			rowNode.size.height,
+			{ kind: "block", children, isRow: true },
+			null,
+		);
+
+		state.y += rowNode.size.height;
+		state.remainingHeight -= rowNode.size.height;
+
+		if (margin.bottom > 0) {
+			state.y += margin.bottom;
+			state.remainingHeight -= margin.bottom;
+		}
+		return;
+	}
+
 	// Container
 	const container = node as BlockBoxNode | FlexRowBoxNode | FlexColumnBoxNode;
 	if (!hasChildren(container) || container.children.length === 0) {
 		const margin = getMargin(container.style);
-		const hWithMargin = container.size.height + 2 * margin;
+		const hWithMargin = container.size.height + margin.top + margin.bottom;
 		emitFragment(
 			state,
 			getPosition(container),
@@ -266,22 +410,22 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 	const startCounts = state.pages.map((p) => p.fragments.length);
 	state.containerStack.push(startCounts);
 
-	const padding = typeof container.style.padding === "number" ? container.style.padding : 0;
-	const childX = x + padding;
+	const padding = getPadding(container.style);
+	const childX = x + padding.left;
 	const containerMargin = getMargin(container.style);
 	// Reserve space for container margin-top so first child does not overlap previous sibling
-	if (containerMargin > 0) {
-		state.y += containerMargin;
-		state.remainingHeight -= containerMargin;
+	if (containerMargin.top > 0) {
+		state.y += containerMargin.top;
+		state.remainingHeight -= containerMargin.top;
 	}
 	for (const child of container.children) {
 		paginateNode(state, child, childX);
 	}
 	closeContainer(state, x, getPosition(container));
 	// Advance by container margin-bottom so next sibling does not overlap
-	if (containerMargin > 0) {
-		state.y += containerMargin;
-		state.remainingHeight -= containerMargin;
+	if (containerMargin.bottom > 0) {
+		state.y += containerMargin.bottom;
+		state.remainingHeight -= containerMargin.bottom;
 	}
 }
 

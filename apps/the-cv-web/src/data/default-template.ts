@@ -1,14 +1,25 @@
 import type { DocumentTemplate } from "@/core/document";
-import { bind, box, conditional, fixed, repeat, richText, row, text } from "@/core/document/template-builder";
+import {
+	bind,
+	box,
+	computed,
+	conditional,
+	fixed,
+	repeat,
+	richText,
+	row,
+	text,
+	token,
+} from "@/core/document/template-builder";
 
 function sectionHeading(label: string) {
 	return text(fixed(label), {
 		style: {
-			fontSize: bind("tokens.fonts.section"),
+			fontSize: token("fonts.section"),
 			fontWeight: fixed("bold"),
 			textTransform: fixed("uppercase" as const),
-			margin: fixed(12),
-			color: bind("tokens.colors.accent"),
+			margin: fixed({ top: 12, bottom: 0, left: 0, right: 0 }),
+			color: token("colors.accent"),
 		},
 	});
 }
@@ -28,9 +39,10 @@ export const defaultTemplate: DocumentTemplate = {
 			subtitle: 14,
 			body: 11,
 			small: 10,
-			section: 10,
+			section: 14,
 		},
 		spaces: {
+			small: 8,
 			page: {
 				padding: 24,
 			},
@@ -40,106 +52,91 @@ export const defaultTemplate: DocumentTemplate = {
 	layout: box(
 		[
 			// Header: name + title
-			box(
-				[
-					row(
-						[
-							text(bind("content.personal.firstName"), {
-								style: {
-									fontSize: bind("tokens.fonts.title"),
-									fontWeight: fixed("bold"),
-									color: bind("tokens.colors.text"),
-								},
-							}),
-							text(fixed(" "), { style: {} }),
-							text(bind("content.personal.lastName"), {
-								style: {
-									fontSize: bind("tokens.fonts.title"),
-									fontWeight: fixed("bold"),
-									color: bind("tokens.colors.text"),
-								},
-							}),
-						],
-						{ gap: 0 },
-					),
-					text(bind("content.personal.title"), {
+			box([
+				box([
+					text(computed([bind("content.personal.firstName"), fixed(" "), bind("content.personal.lastName")]), {
 						style: {
-							fontSize: bind("tokens.fonts.subtitle"),
-							color: bind("tokens.colors.muted"),
-							margin: fixed(2),
+							fontSize: token("fonts.title"),
+							fontWeight: fixed("bold"),
+							color: token("colors.text"),
 						},
 					}),
-					// Contact line: email · phone · location
-					conditional(bind("content.personal.email"), [
-						row(
-							[
-								text(bind("content.personal.email"), {
-									style: {
-										fontSize: bind("tokens.fonts.small"),
-										color: bind("tokens.colors.muted"),
-									},
-								}),
-								text(fixed(" · "), {
-									style: { fontSize: bind("tokens.fonts.small"), color: bind("tokens.colors.muted") },
-								}),
-								text(bind("content.personal.phone"), {
-									style: {
-										fontSize: bind("tokens.fonts.small"),
-										color: bind("tokens.colors.muted"),
-									},
-								}),
-								text(fixed(" · "), {
-									style: { fontSize: bind("tokens.fonts.small"), color: bind("tokens.colors.muted") },
-								}),
-								text(bind("content.personal.location"), {
-									style: {
-										fontSize: bind("tokens.fonts.small"),
-										color: bind("tokens.colors.muted"),
-									},
-								}),
-							],
-							{ gap: 0 },
-						),
-					]),
-				],
-				{ style: { margin: fixed(0), padding: fixed(0) } },
-			),
+				]),
+				text(bind("content.personal.title"), {
+					style: {
+						fontSize: token("fonts.subtitle"),
+						color: token("colors.muted"),
+					},
+				}),
+				// Contact line: email · phone · location
+				row(
+					[
+						conditional(bind("content.personal.email"), [
+							text(bind("content.personal.email"), {
+								style: {
+									fontSize: token("fonts.small"),
+									color: token("colors.muted"),
+								},
+							}),
+						]),
+
+						conditional(bind("content.personal.phone"), [
+							text(bind("content.personal.phone"), {
+								style: {
+									fontSize: token("fonts.small"),
+									color: token("colors.muted"),
+								},
+							}),
+						]),
+
+						conditional(bind("content.personal.location"), [
+							text(bind("content.personal.location"), {
+								style: {
+									fontSize: token("fonts.small"),
+									color: token("colors.muted"),
+								},
+							}),
+						]),
+					],
+					{ style: { gap: token("spaces.small") } },
+				),
+			]),
 
 			// Professional summary
 			conditional(bind("content.summary.text"), [
 				sectionHeading("Professional Summary"),
 				richText(bind("content.summary.text"), {
 					style: {
-						fontSize: bind("tokens.fonts.body"),
+						fontSize: token("fonts.body"),
 						lineHeight: fixed(1.45),
-						color: bind("tokens.colors.text"),
+						color: token("colors.text"),
 					},
 				}),
 			]),
 
 			// Experience
-			sectionHeading("Experience"),
-			repeat(
-				"content.experience",
-				[
-					box(
-						[
+			conditional(bind("content.experience._hasItems"), [
+				sectionHeading("Experience"),
+				repeat(
+					"content.experience",
+					[
+						box([
 							row(
 								[
 									text(bind("content.experience.0.position"), {
 										style: {
-											fontSize: bind("tokens.fonts.body"),
+											fontSize: token("fonts.body"),
 											fontWeight: fixed("bold"),
-											color: bind("tokens.colors.text"),
+											color: token("colors.text"),
 										},
 									}),
 									text(fixed(" — "), {
-										style: { fontSize: bind("tokens.fonts.body"), color: bind("tokens.colors.muted") },
+										style: { fontSize: token("fonts.body"), color: token("colors.muted") },
 									}),
 									text(bind("content.experience.0.company"), {
 										style: {
-											fontSize: bind("tokens.fonts.body"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.body"),
+											color: token("colors.muted"),
 										},
 									}),
 								],
@@ -149,26 +146,26 @@ export const defaultTemplate: DocumentTemplate = {
 								[
 									text(bind("content.experience.0.startDate"), {
 										style: {
-											fontSize: bind("tokens.fonts.small"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.small"),
+											color: token("colors.muted"),
 										},
 									}),
 									text(fixed(" – "), {
-										style: { fontSize: bind("tokens.fonts.small"), color: bind("tokens.colors.muted") },
+										style: { fontSize: token("fonts.small"), color: token("colors.muted") },
 									}),
 									text(bind("content.experience.0.endDate"), {
 										style: {
-											fontSize: bind("tokens.fonts.small"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.small"),
+											color: token("colors.muted"),
 										},
 									}),
 									text(fixed(" · "), {
-										style: { fontSize: bind("tokens.fonts.small"), color: bind("tokens.colors.muted") },
+										style: { fontSize: token("fonts.small"), color: token("colors.muted") },
 									}),
 									text(bind("content.experience.0.location"), {
 										style: {
-											fontSize: bind("tokens.fonts.small"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.small"),
+											color: token("colors.muted"),
 										},
 									}),
 								],
@@ -176,42 +173,40 @@ export const defaultTemplate: DocumentTemplate = {
 							),
 							richText(bind("content.experience.0.description"), {
 								style: {
-									fontSize: bind("tokens.fonts.body"),
+									fontSize: token("fonts.body"),
 									lineHeight: fixed(1.4),
-									margin: fixed(4),
-									color: bind("tokens.colors.text"),
+									color: token("colors.text"),
 								},
 							}),
-						],
-						{ style: { margin: fixed(10) } },
-					),
-				],
-				{ breakable: true },
-			),
+						]),
+					],
+					{ breakable: true },
+				),
+			]),
 
 			// Education
-			sectionHeading("Education"),
-			repeat(
-				"content.education",
-				[
-					box(
-						[
+			conditional(bind("content.education._hasItems"), [
+				sectionHeading("Education"),
+				repeat(
+					"content.education",
+					[
+						box([
 							row(
 								[
 									text(bind("content.education.0.degree"), {
 										style: {
-											fontSize: bind("tokens.fonts.body"),
+											fontSize: token("fonts.body"),
 											fontWeight: fixed("bold"),
-											color: bind("tokens.colors.text"),
+											color: token("colors.text"),
 										},
 									}),
 									text(fixed(" — "), {
-										style: { fontSize: bind("tokens.fonts.body"), color: bind("tokens.colors.muted") },
+										style: { fontSize: token("fonts.body"), color: token("colors.muted") },
 									}),
 									text(bind("content.education.0.institution"), {
 										style: {
-											fontSize: bind("tokens.fonts.body"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.body"),
+											color: token("colors.muted"),
 										},
 									}),
 								],
@@ -221,26 +216,26 @@ export const defaultTemplate: DocumentTemplate = {
 								[
 									text(bind("content.education.0.startDate"), {
 										style: {
-											fontSize: bind("tokens.fonts.small"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.small"),
+											color: token("colors.muted"),
 										},
 									}),
 									text(fixed(" – "), {
-										style: { fontSize: bind("tokens.fonts.small"), color: bind("tokens.colors.muted") },
+										style: { fontSize: token("fonts.small"), color: token("colors.muted") },
 									}),
 									text(bind("content.education.0.endDate"), {
 										style: {
-											fontSize: bind("tokens.fonts.small"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.small"),
+											color: token("colors.muted"),
 										},
 									}),
 									text(fixed(" · "), {
-										style: { fontSize: bind("tokens.fonts.small"), color: bind("tokens.colors.muted") },
+										style: { fontSize: token("fonts.small"), color: token("colors.muted") },
 									}),
 									text(bind("content.education.0.city"), {
 										style: {
-											fontSize: bind("tokens.fonts.small"),
-											color: bind("tokens.colors.muted"),
+											fontSize: token("fonts.small"),
+											color: token("colors.muted"),
 										},
 									}),
 								],
@@ -249,58 +244,60 @@ export const defaultTemplate: DocumentTemplate = {
 							conditional(bind("content.education.0.description"), [
 								richText(bind("content.education.0.description"), {
 									style: {
-										fontSize: bind("tokens.fonts.body"),
+										fontSize: token("fonts.body"),
 										lineHeight: fixed(1.4),
-										margin: fixed(4),
-										color: bind("tokens.colors.text"),
+										color: token("colors.text"),
 									},
 								}),
 							]),
-						],
-						{ style: { margin: fixed(10) } },
-					),
-				],
-				{ breakable: true },
-			),
+						]),
+					],
+					{ breakable: true },
+				),
+			]),
 
 			// Skills
-			sectionHeading("Skills"),
-			repeat(
-				"content.skills",
-				[
-					row(
-						[
-							text(bind("content.skills.0.skill"), {
-								style: {
-									fontSize: bind("tokens.fonts.body"),
-									color: bind("tokens.colors.text"),
-								},
-							}),
-						],
-						{ gap: 0 },
-					),
-				],
-				{ breakable: true },
-			),
+			conditional(bind("content.skills._hasItems"), [
+				sectionHeading("Skills"),
+				repeat(
+					"content.skills",
+					[
+						row(
+							[
+								text(bind("content.skills.0.skill"), {
+									style: {
+										fontSize: token("fonts.body"),
+										color: token("colors.text"),
+									},
+								}),
+							],
+							{ gap: 0 },
+						),
+					],
+					{ breakable: true },
+				),
+			]),
 
 			// Languages
-			sectionHeading("Languages"),
-			repeat(
-				"content.languages",
-				[
-					text(bind("content.languages.0.language"), {
-						style: {
-							fontSize: bind("tokens.fonts.body"),
-							color: bind("tokens.colors.text"),
-						},
-					}),
-				],
-				{ breakable: true },
-			),
+			conditional(bind("content.languages._hasItems"), [
+				sectionHeading("Languages"),
+				repeat(
+					"content.languages",
+					[
+						text(bind("content.languages.0.language"), {
+							style: {
+								fontSize: token("fonts.body"),
+								color: token("colors.text"),
+							},
+						}),
+					],
+					{ breakable: true },
+				),
+			]),
 		],
 		{
 			style: {
-				padding: bind("tokens.spaces.page.padding"),
+				padding: token("spaces.page.padding"),
 			},
 		},
 	),

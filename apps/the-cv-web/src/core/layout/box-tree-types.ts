@@ -81,6 +81,10 @@ export interface TextBoxNode {
 	/** Single text run; measured as one block, then lineCount/lineHeight for pagination. */
 	text: TextRun;
 	unbreakable?: boolean;
+	/** When true, node is a direct child of a flex-row; measure natural (unconstrained) text width. */
+	inFlexRow?: boolean;
+	/** Document path for bound value (e.g. content.personal.email). Used for active field highlight. */
+	dataKey?: string;
 }
 
 // --- Image: replaced block ----------------------------------------------------
@@ -95,6 +99,7 @@ export interface ImageBoxNode {
 	src: string;
 	alt?: string;
 	unbreakable?: boolean;
+	dataKey?: string;
 }
 
 export type BoxNode = BlockBoxNode | FlexRowBoxNode | FlexColumnBoxNode | TextBoxNode | ImageBoxNode;

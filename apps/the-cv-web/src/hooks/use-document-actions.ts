@@ -35,7 +35,9 @@ export function useCreateDocument() {
 								}
 							}
 							setLoading(false);
-							navigate(`/c/${documentDetail.id}`, { state: { internal: true } });
+							navigate(`/c/${documentDetail.id}`, {
+								state: { internal: true, initialDocumentData: initialData },
+							});
 						},
 						onError: () => {
 							setLoading(false);
@@ -48,7 +50,9 @@ export function useCreateDocument() {
 					{
 						onSuccess: (documentDetail) => {
 							setLoading(false);
-							navigate(`/r/${documentDetail.id}`, { state: { internal: true } });
+							navigate(`/r/${documentDetail.id}`, {
+								state: { internal: true, initialDocumentData: initialData },
+							});
 						},
 						onError: () => {
 							setLoading(false);

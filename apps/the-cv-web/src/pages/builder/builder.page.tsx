@@ -1,3 +1,4 @@
+import type { DocumentData } from "@algo/cv-core";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { DataEditor } from "@/components/builder/data-editor";
@@ -83,11 +84,18 @@ const BuilderPage = Page(() => {
 	const setDocument = useBuilderStore((state) => state.setDocument);
 
 	useEffect(() => {
-		if (documentDetailQuery.data) {
-			setLoading(false);
-			setDocument(documentDetailQuery.data);
-		}
-	}, [documentDetailQuery, setDocument]);
+		if (!documentDetailQuery.data) return;
+		const doc = documentDetailQuery.data;
+		const hasStructure = doc.data.sectionIds.length > 0 && doc.data.sections.length > 0;
+		const initialData = location.state?.initialDocumentData as DocumentData | undefined;
+		// When opening a newly created CV, use full initialData (sections/entities) if the loaded doc has none
+		const dataToSet = hasStructure ? doc.data : (initialData ?? doc.data);
+		setDocument({
+			...doc,
+			data: dataToSet,
+		});
+		setLoading(false);
+	}, [documentDetailQuery.data, location.state?.initialDocumentData, setDocument]);
 
 	if (!id) {
 		return (

@@ -7,6 +7,8 @@ const FieldSchema = z.object({
 	label: z.string().max(50),
 	placeholder: z.string().max(50),
 	colSpan: z.number(),
+	/** Optional path segment for document view (e.g. "firstName", "position"). Used to build path-based keys for layout. */
+	key: z.string().max(50).optional(),
 });
 
 const EntitySchema = z.object({
@@ -42,3 +44,8 @@ export const DocumentDetailSchema = z
 
 export type DocumentData = z.infer<typeof DocumentData>;
 export type DocumentDetail = z.infer<typeof DocumentDetailSchema>;
+
+/** Inferred from DocumentData schema */
+export type Section = DocumentData["sections"][number];
+export type Entity = Section["entities"][number];
+export type Field = Entity["fields"][number];

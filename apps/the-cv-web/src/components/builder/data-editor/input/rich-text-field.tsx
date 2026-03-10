@@ -15,6 +15,8 @@ type BuilderRichTextInputProps = {
 	label: string;
 	placeholder?: string;
 	field: string;
+	/** Document path for this field (e.g. content.summary.text). When set, focus will set active field in preview. */
+	dataKey?: string;
 };
 
 export function BuilderRichTextInput({
@@ -23,9 +25,11 @@ export function BuilderRichTextInput({
 	label,
 	placeholder = "Start writing…",
 	field,
+	dataKey,
 }: BuilderRichTextInputProps) {
 	const value = useBuilderStore((state) => state.data.fieldValues[field] ?? "");
 	const setValue = useBuilderStore((state) => state.setFieldValue);
+	const setActiveField = useBuilderStore((state) => state.setActiveField);
 
 	const editor = useEditor({
 		extensions: [
@@ -39,6 +43,11 @@ export function BuilderRichTextInput({
 			attributes: {
 				class:
 					"min-h-[120px] w-full bg-input/20 px-3 py-2 text-sm outline-none focus-visible:ring-inset focus-visible:ring-ring/30 dark:bg-input/30 [&_p]:mb-2 [&_p:last-child]:mb-0",
+			},
+			handleDOMEvents: {
+				focus: () => {
+					if (dataKey != null) setActiveField(dataKey);
+				},
 			},
 		},
 	});

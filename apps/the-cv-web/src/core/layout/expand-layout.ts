@@ -1,6 +1,7 @@
 import type {
 	BoundValue,
 	ColumnNode,
+	ComputedValue,
 	ConditionalNode,
 	DesignTokens,
 	DocumentTemplate,
@@ -16,7 +17,7 @@ import type {
 	StyleProps,
 	Value,
 } from "@/core/document/document-template";
-import type { ResolvedStyleProps } from "@/core/render/render-tree";
+import type { ResolvedStyleProps, SpaceBox } from "@/core/render/render-tree";
 import { getRepeatIndices } from "./document-view";
 
 // --- Expanded layout tree (no Value<>, no repeat/conditional) -----------------
@@ -50,6 +51,8 @@ export interface ExpandedTextNode {
 	kind: "text";
 	content: string;
 	style: ResolvedStyleProps;
+	/** Document path for this bound value (e.g. content.personal.email). Used for active field highlight. */
+	dataKey?: string;
 }
 
 export interface ExpandedRichTextNode {
@@ -57,6 +60,7 @@ export interface ExpandedRichTextNode {
 	kind: "rich-text";
 	content: string;
 	style: ResolvedStyleProps;
+	dataKey?: string;
 }
 
 export interface ExpandedImageNode {
@@ -65,6 +69,7 @@ export interface ExpandedImageNode {
 	src: string;
 	alt?: string;
 	style: ResolvedStyleProps;
+	dataKey?: string;
 }
 
 export type ExpandedLayoutNode =
@@ -93,10 +98,16 @@ function getTokenValue(tokens: DesignTokens, path: string): unknown {
 	return current;
 }
 
-function resolveSpaceValue(sv: SpaceValue | undefined): number {
-	if (sv == null) return 0;
-	if (typeof sv === "number") return sv;
-	return sv.top ?? 0;
+function resolveSpaceValue(sv: SpaceValue | undefined): SpaceBox {
+	if (sv == null) return { top: 0, right: 0, bottom: 0, left: 0 };
+	if (typeof sv === "number") return { top: sv, right: sv, bottom: sv, left: sv };
+	const o = sv as { top?: number; right?: number; bottom?: number; left?: number };
+	return {
+		top: o.top ?? 0,
+		right: o.right ?? 0,
+		bottom: o.bottom ?? 0,
+		left: o.left ?? 0,
+	};
 }
 
 function resolveValue<T>(
@@ -106,10 +117,15 @@ function resolveValue<T>(
 	scope: RepeatScope | undefined,
 ): T {
 	if (value.kind === "fixed") return (value as FixedValue<T>).value;
+	if (value.kind === "computed") {
+		const comp = value as unknown as ComputedValue;
+		const joined = comp.parts.map((p) => resolveValue(p, document, tokens, scope) as string).join("");
+		return joined as T;
+	}
 	const key = (value as BoundValue).key;
 	let resolvedKey = key;
-	if (scope && key.startsWith(scope.source + ".")) {
-		const rest = key.slice(scope.source.length);
+	if (scope && key.startsWith(`${scope.source}.`)) {
+		const rest = key.slice(scope.source.length + 1);
 		const match = /^(\d+)\.(.*)$/.exec(rest);
 		if (match) {
 			resolvedKey = `${scope.source}.${scope.index}.${match[2]}`;
@@ -122,6 +138,20 @@ function resolveValue<T>(
 	const docVal = document[resolvedKey];
 	if (docVal !== undefined) return docVal as T;
 	return "" as T;
+}
+
+/** Return the document path for a bind value (with scope applied), or undefined for non-bind. */
+function resolveBindKey(value: Value<string>, scope: RepeatScope | undefined): string | undefined {
+	if (value.kind !== "bind") return undefined;
+	const key = (value as BoundValue).key;
+	if (scope && key.startsWith(`${scope.source}.`)) {
+		const rest = key.slice(scope.source.length + 1);
+		const match = /^(\d+)\.(.*)$/.exec(rest);
+		if (match) {
+			return `${scope.source}.${scope.index}.${match[2]}`;
+		}
+	}
+	return key;
 }
 
 function resolveStyleProps(
@@ -156,7 +186,7 @@ function resolveStyleProps(
 	}
 	if (style.gap !== undefined) {
 		const v = resolveValue(style.gap as Value<SpaceValue>, document, tokens, scope);
-		out.gap = resolveSpaceValue(v as SpaceValue);
+		out.gap = resolveSpaceValue(v as SpaceValue).top;
 	}
 	if (style.fontFamily !== undefined) {
 		out.fontFamily = resolveValue(style.fontFamily, document, tokens, scope) as string;
@@ -289,12 +319,14 @@ function expandNode(
 			const t = node as LayoutTextNode;
 			const content = resolve(t.src);
 			const style = resolveStyle(t.style) ?? {};
+			const dataKey = resolveBindKey(t.src, scope);
 			return [
 				{
 					id: nextExpandedId(),
 					kind: "text",
 					content: String(content ?? ""),
 					style,
+					...(dataKey !== undefined && { dataKey }),
 				},
 			];
 		}
@@ -302,12 +334,14 @@ function expandNode(
 			const rt = node as RichTextNode;
 			const content = resolve(rt.src);
 			const style = resolveStyle(rt.style) ?? {};
+			const dataKey = resolveBindKey(rt.src, scope);
 			return [
 				{
 					id: nextExpandedId(),
 					kind: "rich-text",
 					content: String(content ?? ""),
 					style,
+					...(dataKey !== undefined && { dataKey }),
 				},
 			];
 		}
@@ -315,12 +349,14 @@ function expandNode(
 			const img = node as ImageNode;
 			const src = resolve(img.src);
 			const style = resolveStyle(img.style) ?? {};
+			const dataKey = resolveBindKey(img.src, scope);
 			return [
 				{
 					id: nextExpandedId(),
 					kind: "image",
 					src: String(src ?? ""),
 					style,
+					...(dataKey !== undefined && { dataKey }),
 				},
 			];
 		}

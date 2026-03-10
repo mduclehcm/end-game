@@ -1,10 +1,14 @@
+import { useCallback } from "react";
 import type { Fragment, FragmentTree, PageFragment } from "@/core/layout";
 import type { ResolvedStyleProps } from "@/core/render/render-tree";
+import { spaceBoxToCss } from "@/core/render/render-tree";
+import { cn } from "@/lib/utils";
+import { useBuilderStore } from "@/store";
 
 function applyResolvedStyle(style: ResolvedStyleProps): React.CSSProperties {
 	const s: React.CSSProperties = {};
-	if (style.padding != null) s.padding = `${style.padding}px`;
-	if (style.margin != null) s.margin = `${style.margin}px`;
+	if (style.padding != null) s.padding = spaceBoxToCss(style.padding);
+	if (style.margin != null) s.margin = spaceBoxToCss(style.margin);
 	if (style.fontSize != null) s.fontSize = `${style.fontSize}px`;
 	if (style.fontWeight != null) s.fontWeight = String(style.fontWeight);
 	if (style.fontFamily != null) s.fontFamily = style.fontFamily;
@@ -14,15 +18,22 @@ function applyResolvedStyle(style: ResolvedStyleProps): React.CSSProperties {
 	return s;
 }
 
-function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
+interface FragmentContentRendererProps {
+	fragment: Fragment;
+	activeField: string | null;
+	onFieldClick: (dataKey: string) => void;
+}
+
+function FragmentContentRenderer({ fragment, activeField, onFieldClick }: FragmentContentRendererProps) {
 	const { content } = fragment;
 	switch (content.kind) {
 		case "text": {
-			const { fullContent, lineStart, lineCount, style, isHtml } = content;
+			const { fullContent, lineStart, lineCount, style, isHtml, dataKey } = content;
 			const lineHeight = style.lineHeight ?? (style.fontSize ? style.fontSize * 1.2 : 16);
 			const heightPx = lineCount * lineHeight;
 			const innerStyle = { transform: `translateY(-${lineStart * lineHeight}px)` };
-			return (
+			const isActive = dataKey != null && activeField === dataKey;
+			const inner = (
 				<div
 					style={{
 						...applyResolvedStyle(style),
@@ -40,10 +51,38 @@ function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
 					)}
 				</div>
 			);
+			if (dataKey != null) {
+				return (
+					<div
+						role="button"
+						tabIndex={0}
+						className={cn(
+							"cursor-pointer rounded outline-offset-1 transition-shadow focus-visible:outline-2 focus-visible:outline-ring",
+							isActive && "ring-2 ring-ring ring-offset-2 ring-offset-background",
+						)}
+						style={{ boxSizing: "border-box" }}
+						data-data-key={dataKey}
+						onClick={(e) => {
+							e.stopPropagation();
+							onFieldClick(dataKey);
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								onFieldClick(dataKey);
+							}
+						}}
+					>
+						{inner}
+					</div>
+				);
+			}
+			return inner;
 		}
 		case "image": {
-			const { src, alt, style } = content;
-			return (
+			const { src, alt, style, dataKey } = content;
+			const isActive = dataKey != null && activeField === dataKey;
+			const imgEl = (
 				<img
 					src={src}
 					alt={alt ?? ""}
@@ -56,15 +95,42 @@ function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
 					}}
 				/>
 			);
+			if (dataKey != null) {
+				return (
+					<div
+						role="button"
+						tabIndex={0}
+						className={cn(
+							"cursor-pointer rounded outline-offset-1 transition-shadow focus-visible:outline-2 focus-visible:outline-ring",
+							isActive && "ring-2 ring-ring ring-offset-2 ring-offset-background",
+						)}
+						style={{ boxSizing: "border-box" }}
+						data-data-key={dataKey}
+						onClick={(e) => {
+							e.stopPropagation();
+							onFieldClick(dataKey);
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								onFieldClick(dataKey);
+							}
+						}}
+					>
+						{imgEl}
+					</div>
+				);
+			}
+			return imgEl;
 		}
 		case "block": {
-			const { children } = content;
-			const useAbsolute = fragment.position === "absolute";
+			const { children, isRow } = content;
+			const useAbsolute = !isRow && fragment.position === "absolute";
 			return (
 				<div
 					style={{
 						display: "flex",
-						flexDirection: "column",
+						flexDirection: isRow ? "row" : "column",
 						width: fragment.width,
 						height: fragment.height,
 						boxSizing: "border-box",
@@ -72,7 +138,19 @@ function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
 					}}
 				>
 					{children.map((child) =>
-						useAbsolute ? (
+						isRow ? (
+							<div
+								key={child.id}
+								style={{
+									width: child.width,
+									height: child.height,
+									flexShrink: 0,
+									boxSizing: "border-box",
+								}}
+							>
+								<FragmentContentRenderer fragment={child} activeField={activeField} onFieldClick={onFieldClick} />
+							</div>
+						) : useAbsolute ? (
 							<div
 								key={child.id}
 								style={{
@@ -84,7 +162,7 @@ function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
 									boxSizing: "border-box",
 								}}
 							>
-								<FragmentContentRenderer fragment={child} />
+								<FragmentContentRenderer fragment={child} activeField={activeField} onFieldClick={onFieldClick} />
 							</div>
 						) : (
 							<div
@@ -96,7 +174,7 @@ function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
 									boxSizing: "border-box",
 								}}
 							>
-								<FragmentContentRenderer fragment={child} />
+								<FragmentContentRenderer fragment={child} activeField={activeField} onFieldClick={onFieldClick} />
 							</div>
 						),
 					)}
@@ -106,7 +184,13 @@ function FragmentContentRenderer({ fragment }: { fragment: Fragment }) {
 	}
 }
 
-function FragmentRenderer({ fragment }: { fragment: Fragment }) {
+interface FragmentRendererProps {
+	fragment: Fragment;
+	activeField: string | null;
+	onFieldClick: (dataKey: string) => void;
+}
+
+function FragmentRenderer({ fragment, activeField, onFieldClick }: FragmentRendererProps) {
 	const useAbsolute = fragment.position === "absolute";
 	return (
 		<div
@@ -129,14 +213,22 @@ function FragmentRenderer({ fragment }: { fragment: Fragment }) {
 						}
 			}
 		>
-			<FragmentContentRenderer fragment={fragment} />
+			<FragmentContentRenderer fragment={fragment} activeField={activeField} onFieldClick={onFieldClick} />
 		</div>
 	);
 }
 
-function PageView({ page }: { page: PageFragment }) {
+interface PageViewProps {
+	page: PageFragment;
+	activeField: string | null;
+	onFieldClick: (dataKey: string) => void;
+	onBackgroundClick: () => void;
+}
+
+function PageView({ page, activeField, onFieldClick, onBackgroundClick }: PageViewProps) {
 	return (
 		<div
+			role="presentation"
 			style={{
 				position: "relative",
 				display: "flex",
@@ -146,8 +238,15 @@ function PageView({ page }: { page: PageFragment }) {
 				boxSizing: "border-box",
 			}}
 		>
+			{/* Click on empty area clears active field */}
+			<button
+				type="button"
+				className="absolute inset-0 cursor-default border-0 bg-transparent p-0"
+				aria-label="Clear field selection"
+				onClick={onBackgroundClick}
+			/>
 			{page.fragments.map((frag) => (
-				<FragmentRenderer key={frag.id} fragment={frag} />
+				<FragmentRenderer key={frag.id} fragment={frag} activeField={activeField} onFieldClick={onFieldClick} />
 			))}
 		</div>
 	);
@@ -156,9 +255,27 @@ function PageView({ page }: { page: PageFragment }) {
 export interface FragmentTreeRendererProps {
 	fragmentTree: FragmentTree | null;
 	pageContentRef?: React.RefObject<HTMLDivElement | null>;
+	/** Called with the first page content div when mounted; use as measure root so text is measured in the same font context. */
+	onFirstPageContentMounted?: (el: HTMLElement | null) => void;
 }
 
-export function FragmentTreeRenderer({ fragmentTree, pageContentRef }: FragmentTreeRendererProps) {
+export function FragmentTreeRenderer({
+	fragmentTree,
+	pageContentRef,
+	onFirstPageContentMounted,
+}: FragmentTreeRendererProps) {
+	const activeField = useBuilderStore((state) => state.activeField);
+	const setActiveField = useBuilderStore((state) => state.setActiveField);
+	const onFieldClick = useCallback(
+		(dataKey: string) => {
+			setActiveField(dataKey);
+		},
+		[setActiveField],
+	);
+	const onBackgroundClick = useCallback(() => {
+		setActiveField(null);
+	}, [setActiveField]);
+
 	if (!fragmentTree || fragmentTree.length === 0) {
 		return (
 			<div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -177,8 +294,6 @@ export function FragmentTreeRenderer({ fragmentTree, pageContentRef }: FragmentT
 						width: page.pageWidthPx,
 						height: page.pageHeightPx,
 						aspectRatio: String(page.pageWidthPx / page.pageHeightPx),
-						paddingTop: 0,
-						paddingLeft: 0,
 						boxSizing: "border-box",
 					}}
 				>
@@ -191,15 +306,21 @@ export function FragmentTreeRenderer({ fragmentTree, pageContentRef }: FragmentT
 						}}
 					>
 						<div
+							ref={page.pageIndex === 0 ? onFirstPageContentMounted : undefined}
 							style={{
 								position: "absolute",
-								left: 0,
-								top: 0,
+								left: page.contentLeft,
+								top: page.contentTop,
 								width: page.contentWidth,
 								height: page.contentHeight,
 							}}
 						>
-							<PageView page={page} />
+							<PageView
+								page={page}
+								activeField={activeField}
+								onFieldClick={onFieldClick}
+								onBackgroundClick={onBackgroundClick}
+							/>
 						</div>
 					</div>
 				</div>

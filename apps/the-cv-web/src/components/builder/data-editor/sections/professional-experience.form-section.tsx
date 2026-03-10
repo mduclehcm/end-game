@@ -1,21 +1,18 @@
 import { PlusIcon, Trash2Icon } from "lucide-react";
-import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { getArrayIndices, useBuilderStore } from "@/store";
+import { fieldPath } from "@/core/layout/document-view";
+import { findSection, getOrderedEntities, useBuilderStore } from "@/store";
 import { BuilderFieldInput, BuilderRichTextInput } from "../input";
 import { Section } from "../section";
 import type { SectionProps } from "./share";
 
 export function ProfessionalExperienceFormSection({ sectionId, isDragging }: SectionProps) {
-	const fields = useBuilderStore((state) => state.data.fieldValues);
-	const sections = useBuilderStore((state) => state.data.sections);
+	const data = useBuilderStore((state) => state.data);
 	const addArrayItem = useBuilderStore((state) => state.addArrayItem);
 	const removeArrayItem = useBuilderStore((state) => state.removeArrayItem);
 
-	const indices = useMemo(
-		() => (sectionId ? getArrayIndices(fields, sectionId, sections) : [0]),
-		[fields, sectionId, sections],
-	);
+	const section = sectionId ? findSection(data, sectionId) : undefined;
+	const entities = section ? getOrderedEntities(section) : [];
 
 	return (
 		<Section
@@ -27,11 +24,14 @@ export function ProfessionalExperienceFormSection({ sectionId, isDragging }: Sec
 		>
 			{() => (
 				<>
-					{indices.map((index) => (
-						<div key={index} className="col-span-2 flex flex-col gap-4 rounded-lg border border-border bg-muted/30 p-3">
+					{entities.map((entity, index) => (
+						<div
+							key={entity.id}
+							className="col-span-2 flex flex-col gap-4 rounded-lg border border-border bg-muted/30 p-3"
+						>
 							<div className="flex items-center justify-between gap-2">
 								<span className="text-xs font-medium text-muted-foreground">Experience #{index + 1}</span>
-								{indices.length > 1 && sectionId && (
+								{entities.length > 1 && sectionId && (
 									<Button
 										type="button"
 										variant="ghost"
@@ -44,43 +44,29 @@ export function ProfessionalExperienceFormSection({ sectionId, isDragging }: Sec
 								)}
 							</div>
 							<div className="grid grid-cols-2 gap-4">
-								<BuilderFieldInput
-									className="col-span-2"
-									name={`job-title-${index}`}
-									label="Job Title"
-									field={`content.experience.${index}.position`}
-								/>
-								<BuilderFieldInput
-									className="col-span-2"
-									name={`employer-${index}`}
-									label="Employer"
-									field={`content.experience.${index}.company`}
-								/>
-								<BuilderFieldInput
-									name={`start-date-${index}`}
-									label="Start Date"
-									field={`content.experience.${index}.startDate`}
-									placeholder="YYYY-MM-DD"
-								/>
-								<BuilderFieldInput
-									name={`end-date-${index}`}
-									label="End Date"
-									field={`content.experience.${index}.endDate`}
-									placeholder="YYYY-MM-DD"
-								/>
-								<BuilderFieldInput
-									className="col-span-2"
-									name={`city-state-${index}`}
-									label="City, State"
-									field={`content.experience.${index}.location`}
-								/>
-								<BuilderRichTextInput
-									className="col-span-2"
-									name={`description-${index}`}
-									label="Description"
-									field={`content.experience.${index}.description`}
-									placeholder="Bullet points, achievements, tech stack…"
-								/>
+								{entity.fields.map((field) =>
+									field.type === "richtext" ? (
+										<BuilderRichTextInput
+											key={field.id}
+											className="col-span-2"
+											name={`${field.id}-${index}`}
+											label={field.label}
+											field={field.id}
+											placeholder={field.placeholder}
+											dataKey={section ? fieldPath(section, index, field.key ?? field.id) : undefined}
+										/>
+									) : (
+										<BuilderFieldInput
+											key={field.id}
+											className={field.colSpan === 2 ? "col-span-2" : undefined}
+											name={`${field.id}-${index}`}
+											label={field.label}
+											field={field.id}
+											placeholder={field.placeholder}
+											dataKey={section ? fieldPath(section, index, field.key ?? field.id) : undefined}
+										/>
+									),
+								)}
 							</div>
 						</div>
 					))}

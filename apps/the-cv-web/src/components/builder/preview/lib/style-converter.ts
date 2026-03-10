@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { spaceBoxToCss } from "@/core/render/render-tree";
 
 /**
  * Convert template style object to React CSS properties.
@@ -18,10 +19,10 @@ export function convertStyle(style: any): CSSProperties | undefined {
 		cssStyle.height = typeof style.height === "number" ? `${style.height}px` : style.height;
 	}
 	if (style.padding !== undefined) {
-		cssStyle.padding = `${style.padding}px`;
+		cssStyle.padding = spaceBoxToCss(style.padding);
 	}
 	if (style.margin !== undefined) {
-		cssStyle.margin = `${style.margin}px`;
+		cssStyle.margin = spaceBoxToCss(style.margin);
 	}
 
 	// Typography

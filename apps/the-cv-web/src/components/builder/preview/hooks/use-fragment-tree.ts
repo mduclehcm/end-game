@@ -1,17 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FragmentTree } from "@/core/layout";
 import { useBuilderStore } from "@/store";
 import { runLayoutPipeline } from "../lib/run-layout-pipeline";
 
-export function useFragmentTree(): { fragmentTree: FragmentTree | null; loading: boolean } {
+/**
+ * @param measureRoot - When set, text is measured in this element's font context (e.g. preview container) so widths match and contact text is not clipped.
+ */
+export function useFragmentTree(measureRoot?: HTMLElement | null): {
+	fragmentTree: FragmentTree | null;
+	loading: boolean;
+} {
 	const data = useBuilderStore((state) => state.data);
 	const [fragmentTree, setFragmentTree] = useState<FragmentTree | null>(null);
 	const [loading, setLoading] = useState(true);
+	const fragmentTreeRef = useRef<FragmentTree | null>(null);
+	fragmentTreeRef.current = fragmentTree;
 
 	useEffect(() => {
 		let cancelled = false;
-		setLoading(true);
-		runLayoutPipeline(data)
+		// Only show loading when we have no tree yet (avoid unmounting content when re-running for measureRoot)
+		if (fragmentTreeRef.current == null) setLoading(true);
+		runLayoutPipeline(data, undefined, measureRoot)
 			.then((tree) => {
 				if (!cancelled) {
 					setFragmentTree(tree);
@@ -29,7 +38,7 @@ export function useFragmentTree(): { fragmentTree: FragmentTree | null; loading:
 		return () => {
 			cancelled = true;
 		};
-	}, [data]);
+	}, [data, measureRoot]);
 
 	return { fragmentTree, loading };
 }

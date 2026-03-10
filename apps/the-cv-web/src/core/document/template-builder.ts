@@ -1,6 +1,7 @@
 import type {
 	BoundValue,
 	ColumnNode,
+	ComputedValue,
 	ConditionalNode,
 	FixedValue,
 	ImageNode,
@@ -22,6 +23,14 @@ export function fixed<T>(value: T): FixedValue<T> {
 
 export function bind(key: string): BoundValue {
 	return { kind: "bind", key };
+}
+
+export function computed(parts: Value<string>[]): ComputedValue {
+	return { kind: "computed", parts };
+}
+
+export function token(path: string): BoundValue {
+	return bind(`tokens.${path}`);
 }
 
 export function row(

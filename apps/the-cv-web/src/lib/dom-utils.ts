@@ -1,9 +1,10 @@
 import type { ResolvedStyleProps } from "../core/render/render-tree";
+import { spaceBoxToCss } from "../core/render/render-tree";
 
 function applyStylesToElement(el: HTMLElement, style: ResolvedStyleProps): void {
 	// Layout properties
-	if (style.padding != null) el.style.padding = `${style.padding}px`;
-	if (style.margin != null) el.style.margin = `${style.margin}px`;
+	if (style.padding != null) el.style.padding = spaceBoxToCss(style.padding);
+	if (style.margin != null) el.style.margin = spaceBoxToCss(style.margin);
 	if (style.width != null) {
 		el.style.width = typeof style.width === "number" ? `${style.width}px` : style.width;
 	}
@@ -23,7 +24,36 @@ function applyStylesToElement(el: HTMLElement, style: ResolvedStyleProps): void 
 	if (style.backgroundColor != null) el.style.backgroundColor = style.backgroundColor;
 }
 
-export function measureTextHeight(content: string, width: number, style: ResolvedStyleProps): number {
+/** Measure the natural (unconstrained) rendered width of a text string. */
+export function measureTextNaturalWidth(
+	content: string,
+	style: ResolvedStyleProps,
+	measureRoot?: HTMLElement | null,
+): number {
+	const container = document.createElement("div");
+	container.style.position = "absolute";
+	container.style.visibility = "hidden";
+	container.style.pointerEvents = "none";
+	container.style.left = "-9999px";
+	container.style.top = "0";
+	container.style.whiteSpace = "nowrap";
+	container.style.boxSizing = "border-box";
+	container.innerHTML = content;
+	applyStylesToElement(container, style);
+	const parent = measureRoot ?? document.body;
+	parent.appendChild(container);
+	// Use getBoundingClientRect().width and round up so sub-pixel text never clips in the preview
+	const width = Math.ceil(container.getBoundingClientRect().width);
+	container.remove();
+	return width;
+}
+
+export function measureTextHeight(
+	content: string,
+	width: number,
+	style: ResolvedStyleProps,
+	measureRoot?: HTMLElement | null,
+): number {
 	const container = document.createElement("div");
 	container.style.position = "absolute";
 	container.style.visibility = "hidden";
@@ -35,7 +65,8 @@ export function measureTextHeight(content: string, width: number, style: Resolve
 	container.style.overflow = "hidden";
 	container.innerHTML = content;
 	applyStylesToElement(container, style);
-	document.body.appendChild(container);
+	const parent = measureRoot ?? document.body;
+	parent.appendChild(container);
 	const height = container.offsetHeight;
 	container.remove();
 	return height;

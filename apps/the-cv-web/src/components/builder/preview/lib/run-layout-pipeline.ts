@@ -35,8 +35,13 @@ export function getPageSettingsFromDocument(fieldValues: Record<string, string>)
  * Run the full layout pipeline: expand -> box tree -> measure -> paginate.
  * Returns fragment tree or null if no layout/template.
  * When expansion is empty (e.g. blank/weird data), falls back to default document so preview still shows content.
+ * When measureRoot is provided, text is measured in that element's font context so preview widths match (avoids e.g. phone truncation).
  */
-export async function runLayoutPipeline(data: DocumentData, templateId?: string): Promise<FragmentTree | null> {
+export async function runLayoutPipeline(
+	data: DocumentData,
+	templateId?: string,
+	measureRoot?: HTMLElement | null,
+): Promise<FragmentTree | null> {
 	const base = getDocumentView(data);
 	let document: Record<string, string> = { ...getDefaultDocument(), ...base };
 	const id = templateId ?? document["settings.templateId"] ?? "default-simple";
@@ -59,6 +64,6 @@ export async function runLayoutPipeline(data: DocumentData, templateId?: string)
 	const boxRoot = buildBoxTree(expanded, rect.contentWidth);
 	if (!boxRoot) return null;
 
-	await measureBoxTree(boxRoot);
+	await measureBoxTree(boxRoot, undefined, measureRoot);
 	return paginate(boxRoot, rect);
 }

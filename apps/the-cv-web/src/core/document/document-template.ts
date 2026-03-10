@@ -36,7 +36,13 @@ export type BoundValue = {
 	key: string;
 };
 
-export type Value<T> = FixedValue<T> | BoundValue;
+/** String value computed by concatenating multiple parts (each part is resolved then joined). */
+export type ComputedValue = {
+	kind: "computed";
+	parts: Value<string>[];
+};
+
+export type Value<T> = FixedValue<T> | BoundValue | (T extends string ? ComputedValue : never);
 
 export interface RowNode {
 	id: string;
@@ -108,16 +114,18 @@ export type LayoutNode =
 	| RepeatNode
 	| ConditionalNode;
 
+/** Single value = all sides; object = per-side (missing sides default to 0). */
 export type SpaceValue =
 	| {
-			top: number;
-			right: number;
-			bottom: number;
-			left: number;
+			top?: number;
+			right?: number;
+			bottom?: number;
+			left?: number;
 	  }
 	| number;
 
 export type SpaceDesignToken = {
+	small: SpaceValue;
 	page: {
 		padding: SpaceValue;
 	};

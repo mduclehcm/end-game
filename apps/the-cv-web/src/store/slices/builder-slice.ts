@@ -7,7 +7,7 @@ export interface BuilderSlice {
 	debugMode: boolean;
 	toggleDebugMode: () => void;
 
-	setActiveField: (field: string) => void;
+	setActiveField: (field: string | null) => void;
 }
 
 export const createBuilderSlice: StateCreator<BuilderSlice> = (set) => ({
@@ -15,5 +15,5 @@ export const createBuilderSlice: StateCreator<BuilderSlice> = (set) => ({
 	activeField: null,
 	debugMode: false,
 	toggleDebugMode: () => set((state) => ({ debugMode: !state.debugMode })),
-	setActiveField: (field) => set(() => ({ activeField: field })),
+	setActiveField: (field: string | null) => set(() => ({ activeField: field })),
 });

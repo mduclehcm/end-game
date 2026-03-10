@@ -80,8 +80,8 @@ export async function exportFragmentTreeToPdf(
 		if (page.pageIndex > 0) {
 			doc.addPage();
 		}
-		const offsetX = 0;
-		const offsetY = 0;
+		const offsetX = page.contentLeft ?? 0;
+		const offsetY = page.contentTop ?? 0;
 		for (const frag of page.fragments) {
 			drawFragment(frag, offsetX, offsetY);
 		}

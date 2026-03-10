@@ -31,6 +31,5 @@
 			"@algo/cv-core": ["../../packages/cv-core/src/index.ts"]
 		}
 	},
-	"include": ["src"],
-	"exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
+	"include": ["src"]
 }

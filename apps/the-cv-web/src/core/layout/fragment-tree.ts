@@ -62,6 +62,8 @@ export interface FragmentTextContent {
 	style: ResolvedStyleProps;
 	/** When true, fullContent is HTML and should be rendered with dangerouslySetInnerHTML. */
 	isHtml?: boolean;
+	/** Document path for bound value (e.g. content.personal.email). Used for active field highlight. */
+	dataKey?: string;
 }
 
 export interface FragmentImageContent {
@@ -69,11 +71,14 @@ export interface FragmentImageContent {
 	src: string;
 	alt?: string;
 	style: ResolvedStyleProps;
+	dataKey?: string;
 }
 
 export interface FragmentBlockContent {
 	kind: "block";
 	children: Fragment[];
+	/** When true, children are laid out horizontally (flex-row direction). */
+	isRow?: boolean;
 }
 
 export type FragmentContent = FragmentTextContent | FragmentImageContent | FragmentBlockContent;
@@ -101,6 +106,9 @@ export interface Fragment {
 
 export interface PageFragment {
 	pageIndex: number;
+	/** Content area offset from page top-left (for renderer padding). */
+	contentTop: number;
+	contentLeft: number;
 	/** Content area size in px (for renderer). */
 	contentWidth: number;
 	contentHeight: number;

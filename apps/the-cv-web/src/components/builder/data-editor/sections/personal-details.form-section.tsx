@@ -1,7 +1,17 @@
+import { useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { fieldPath } from "@/core/layout/document-view";
+import { getOrderedEntities, useBuilderStore } from "@/store";
 import { BuilderFieldInput } from "../input";
 import { Section } from "../section";
 
 export function PersonalDetailsFormSection() {
+	const data = useBuilderStore((state) => state.data);
+
+	const section = useMemo(() => data.sections.find((s) => s.kind === "personal"), [data.sections]);
+	const entity = section ? getOrderedEntities(section)[0] : undefined;
+	const fields = entity?.fields ?? [];
+
 	return (
 		<Section
 			name="personal-details"
@@ -12,43 +22,17 @@ export function PersonalDetailsFormSection() {
 		>
 			{(showMore) => (
 				<>
-					<BuilderFieldInput
-						className="col-span-2 mt-2"
-						name="job-target"
-						label="Job Target"
-						field="content.personal.title"
-					/>
-					<BuilderFieldInput name="first-name" label="First Name" field="content.personal.firstName" />
-					<BuilderFieldInput name="last-name" label="Last Name" field="content.personal.lastName" />
-					<BuilderFieldInput name="phone" label="Phone" field="content.personal.phone" />
-					<BuilderFieldInput name="email" label="Email" field="content.personal.email" />
-					<BuilderFieldInput name="linkedin" label="LinkedIn" field="content.personal.linkedin" />
-					<BuilderFieldInput name="postal-code" label="Postal Code" field="content.personal.postalCode" />
-					<BuilderFieldInput name="location" label="Location" field="content.personal.location" />
-					<BuilderFieldInput name="country" label="Country" field="content.personal.country" />
-					{showMore && (
-						<>
-							<BuilderFieldInput
-								className="col-span-2"
-								name="address"
-								label="Address"
-								field="content.personal.address"
-							/>
-							<BuilderFieldInput name="nationality" label="Nationality" field="content.personal.nationality" />
-							<BuilderFieldInput name="place-of-birth" label="Place Of Birth" field="content.personal.placeOfBirth" />
-							<BuilderFieldInput
-								name="driving-license"
-								label="Driving License"
-								field="content.personal.drivingLicense"
-							/>
-							<BuilderFieldInput
-								name="date-of-birth"
-								label="Date Of Birth"
-								field="content.personal.dateOfBirth"
-								placeholder="YYYY-MM-DD"
-							/>
-						</>
-					)}
+					{fields.slice(0, showMore ? undefined : 9).map((field, i) => (
+						<BuilderFieldInput
+							key={field.id}
+							className={cn(field.colSpan === 2 && "col-span-2", i === 0 && "mt-2")}
+							name={field.id}
+							label={field.label}
+							field={field.id}
+							placeholder={field.placeholder}
+							dataKey={section ? fieldPath(section, 0, field.key ?? field.id) : undefined}
+						/>
+					))}
 				</>
 			)}
 		</Section>
