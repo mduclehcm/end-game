@@ -2,6 +2,7 @@ import type { DocumentDetail } from "@algo/cv-core";
 import { CreateDocumentPayload, UpdateDocumentPayload } from "@algo/cv-core";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { AiRewriteService } from "./ai-rewrite.service";
+import { convertPathFieldValuesToDocumentData } from "./convert-path-to-document-data";
 import { DocumentRepository } from "./document.repository";
 
 @Injectable()
@@ -24,7 +25,14 @@ export class DocumentService {
 	}
 
 	async create(payload: CreateDocumentPayload) {
-		return this.repository.create(payload);
+		const data =
+			payload.fieldValues && Object.keys(payload.fieldValues).length > 0
+				? await convertPathFieldValuesToDocumentData(payload.fieldValues)
+				: undefined;
+		return this.repository.create({
+			title: payload.title,
+			data: data ?? null,
+		});
 	}
 
 	async update(id: string, payload: UpdateDocumentPayload) {

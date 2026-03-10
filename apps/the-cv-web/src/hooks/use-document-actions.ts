@@ -2,7 +2,6 @@ import type { CreateDocumentPayload, DocumentData } from "@algo/cv-core";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateLocalDocument, useDeleteLocalDocument } from "@/hooks/use-local-document-queries";
-import { updateCloudDocument } from "@/lib/api";
 import { Logger } from "@/lib/logger";
 import { useCreateCloudDocument, useDeleteCloudDocument } from "./use-cloud-document-actions";
 
@@ -23,27 +22,27 @@ export function useCreateDocument() {
 		({ title, localOnly, initialData }: CreateDocumentOptions) => {
 			setLoading(true);
 			if (!localOnly) {
-				cloudMutation.mutate(
-					{ title },
-					{
-						onSuccess: async (documentDetail) => {
-							if (initialData?.fieldValues && Object.keys(initialData.fieldValues).length > 0) {
-								try {
-									await updateCloudDocument(documentDetail.id, initialData.fieldValues);
-								} catch (err) {
-									logger.errorObj("Failed to patch initial data", err);
-								}
-							}
-							setLoading(false);
-							navigate(`/c/${documentDetail.id}`, {
-								state: { internal: true, initialDocumentData: initialData },
-							});
-						},
-						onError: () => {
-							setLoading(false);
-						},
+				const payload: CreateDocumentPayload = {
+					title,
+					...(initialData?.fieldValues &&
+						Object.keys(initialData.fieldValues).length > 0 && {
+							fieldValues: initialData.fieldValues,
+						}),
+				};
+				cloudMutation.mutate(payload, {
+					onSuccess: (documentDetail) => {
+						setLoading(false);
+						navigate(`/c/${documentDetail.id}`, {
+							state: {
+								internal: true,
+								initialDocumentData: documentDetail.data ?? initialData,
+							},
+						});
 					},
-				);
+					onError: () => {
+						setLoading(false);
+					},
+				});
 			} else {
 				localMutation.mutate(
 					{ title, initialData },

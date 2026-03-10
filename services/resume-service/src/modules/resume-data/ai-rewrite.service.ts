@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, ServiceUnavailableException } from "@nestjs/common";
 import OpenAI from "openai";
+import { LlmUsageService } from "../ai-usage/llm-usage.service";
 
 const CONTENT_PREFIX = "content.";
 const SETTINGS_PREFIX = "settings.";
@@ -25,9 +26,8 @@ const REWRITE_PROMPTS: Record<string, string> = {
 export class AiRewriteService {
 	private openai: OpenAI | null = null;
 
-	constructor() {
+	constructor(private readonly llmUsageService: LlmUsageService) {
 		const apiKey = process.env.OPENAI_API_KEY;
-		console.log("asd", apiKey);
 		if (apiKey) {
 			this.openai = new OpenAI({ apiKey });
 		}
@@ -94,20 +94,6 @@ export class AiRewriteService {
 	}
 
 	async rewrite(currentValue: string, sectionKind: string, fieldKey: string): Promise<string> {
-		// #region agent log
-		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-			body: JSON.stringify({
-				sessionId: "c6e154",
-				location: "ai-rewrite.service.ts:rewrite",
-				message: "rewrite entered",
-				data: { openaiIsNull: !this.openai, sectionKind, fieldKey },
-				timestamp: Date.now(),
-				hypothesisId: "H1",
-			}),
-		}).catch(() => {});
-		// #endregion
 		if (!this.openai) {
 			throw new ServiceUnavailableException("AI rewrite not configured");
 		}
@@ -123,52 +109,39 @@ export class AiRewriteService {
 			throw new BadRequestException("Rewrite not supported for this field");
 		}
 
+		const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+		const startMs = Date.now();
 		let response: Awaited<ReturnType<OpenAI["chat"]["completions"]["create"]>>;
 		try {
 			response = await this.openai.chat.completions.create({
-				model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+				model,
 				messages: [
 					{ role: "system", content: systemPrompt },
 					{ role: "user", content: currentValue },
 				],
 			});
 		} catch (openaiErr) {
-			// #region agent log
-			fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-				method: "POST",
-				headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-				body: JSON.stringify({
-					sessionId: "c6e154",
-					location: "ai-rewrite.service.ts:rewrite",
-					message: "OpenAI create failed",
-					data: { errMessage: openaiErr instanceof Error ? openaiErr.message : String(openaiErr) },
-					timestamp: Date.now(),
-					hypothesisId: "H3",
-				}),
-			}).catch(() => {});
-			// #endregion
 			throw openaiErr;
 		}
 
-		// #region agent log
-		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-			body: JSON.stringify({
-				sessionId: "c6e154",
-				location: "ai-rewrite.service.ts:rewrite",
-				message: "OpenAI create success",
-				data: { hasContent: !!response.choices?.[0]?.message?.content },
-				timestamp: Date.now(),
-				hypothesisId: "H3",
-			}),
-		}).catch(() => {});
-		// #endregion
-
+		const durationMs = Date.now() - startMs;
 		const content = response.choices[0]?.message?.content;
-		if (content == null) {
-			return "";
-		}
-		return content.trim();
+		const output = content != null ? content.trim() : "";
+
+		this.llmUsageService
+			.log({
+				type: "rewrite-field",
+				model,
+				fieldKey: `${kind}.${key}`,
+				systemPrompt,
+				userInput: currentValue,
+				output,
+				inputTokens: response.usage?.prompt_tokens ?? 0,
+				outputTokens: response.usage?.completion_tokens ?? 0,
+				durationMs,
+			})
+			.catch(() => {});
+
+		return output;
 	}
 }

@@ -8,6 +8,7 @@
 	"scripts": {
 		"dev:the-button": "turbo run dev --filter=@algo/the-button-web...",
 		"dev:the-cv": "turbo run dev --filter=@algo/the-cv...",
+		"dev:the-cv-admin": "turbo run dev --filter=@algo/the-cv-admin-portal...",
 		"lint": "biome check ."
 	},
 	"devDependencies": {

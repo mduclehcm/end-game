@@ -4,6 +4,8 @@ import type { DeleteItemResponse, ListResponse, SingleResponse } from "./common"
 
 export interface CreateDocumentPayload {
 	title: string;
+	/** Path-based field values from import (e.g. "content.personal.firstName"). Server converts to full schema with section/entity/field ids. */
+	fieldValues?: Record<string, string>;
 }
 
 export interface UpdateDocumentPayload {

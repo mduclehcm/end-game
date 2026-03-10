@@ -1,10 +1,16 @@
-import type { CreateDocumentPayload, DocumentDetail, DocumentInfo, UpdateDocumentPayload } from "@algo/cv-core";
+import type {
+	CreateDocumentPayload,
+	DocumentData,
+	DocumentDetail,
+	DocumentInfo,
+	UpdateDocumentPayload,
+} from "@algo/cv-core";
 import { Inject, Injectable } from "@nestjs/common";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { DRIZZLE } from "../../database/database.provider";
 import * as schema from "../../database/schema";
-import { DocumentsTable } from "../../database/schema";
+import { DocumentsTable, FieldValuesTable } from "../../database/schema";
 import { toDocumentDetail, toDocumentInfoList } from "./dto/utils";
 
 @Injectable()
@@ -17,47 +23,68 @@ export class DocumentRepository {
 	}
 
 	async findById(id: string): Promise<DocumentDetail | null> {
-		const results = await this.db.select().from(DocumentsTable).where(eq(DocumentsTable.id, id));
-		if (!results.length) {
-			return null;
+		const [docRow] = await this.db.select().from(DocumentsTable).where(eq(DocumentsTable.id, id)).limit(1);
+		if (!docRow) return null;
+		const valueRows = await this.db.select().from(FieldValuesTable).where(eq(FieldValuesTable.documentId, id));
+		const fieldValues: Record<string, string> = {};
+		for (const r of valueRows) {
+			fieldValues[r.fieldId] = r.value;
 		}
-		return toDocumentDetail(results[0]);
+		return toDocumentDetail(docRow, fieldValues);
 	}
 
-	async create(payload: CreateDocumentPayload): Promise<DocumentDetail | null> {
+	async create(payload: CreateDocumentPayload & { data?: DocumentData | null }): Promise<DocumentDetail | null> {
 		const { nanoid } = await import("nanoid");
-		const results = await this.db
+		const data = payload.data ?? null;
+		const structure = data ? { sectionIds: data.sectionIds, sections: data.sections } : null;
+		const fieldValuesMap = data?.fieldValues ?? {};
+		const docId = nanoid(10);
+		const [inserted] = await this.db
 			.insert(DocumentsTable)
 			.values({
-				id: nanoid(10),
+				id: docId,
 				title: payload.title,
-				fields: {},
+				data: structure,
 			})
 			.returning();
-		if (!results.length) {
-			return null;
+		if (!inserted) return null;
+		const now = new Date();
+		if (Object.keys(fieldValuesMap).length > 0) {
+			await this.db.insert(FieldValuesTable).values(
+				Object.entries(fieldValuesMap).map(([fieldId, value]) => ({
+					documentId: docId,
+					fieldId,
+					value: value ?? "",
+					updatedAt: now,
+				})),
+			);
 		}
-		return toDocumentDetail(results[0]);
+		return toDocumentDetail(inserted, fieldValuesMap);
 	}
 
 	async update(id: string, payload: UpdateDocumentPayload): Promise<DocumentDetail | null> {
-		const { fields, ...rest } = payload;
-		const setData: Record<string, unknown> = { ...rest, updatedAt: new Date() };
-		if (fields) {
-			setData.fields = sql`COALESCE(${DocumentsTable.fields}, '{}'::jsonb) || ${JSON.stringify(fields)}::jsonb`;
+		const { fields, title } = payload;
+		if (title !== undefined) {
+			await this.db.update(DocumentsTable).set({ title, updatedAt: new Date() }).where(eq(DocumentsTable.id, id));
 		}
-		const results = await this.db.update(DocumentsTable).set(setData).where(eq(DocumentsTable.id, id)).returning();
-		if (!results.length) {
-			return null;
+		if (fields !== undefined && Object.keys(fields).length > 0) {
+			const now = new Date();
+			for (const [fieldId, value] of Object.entries(fields)) {
+				await this.db
+					.insert(FieldValuesTable)
+					.values({ documentId: id, fieldId, value: value ?? "", updatedAt: now })
+					.onConflictDoUpdate({
+						target: [FieldValuesTable.documentId, FieldValuesTable.fieldId],
+						set: { value: value ?? "", updatedAt: now },
+					});
+			}
 		}
-		return toDocumentDetail(results[0]);
+		return this.findById(id);
 	}
 
 	async remove(id: string) {
+		await this.db.delete(FieldValuesTable).where(eq(FieldValuesTable.documentId, id));
 		const results = await this.db.delete(DocumentsTable).where(eq(DocumentsTable.id, id)).returning();
-		if (!results.length) {
-			return false;
-		}
-		return true;
+		return results.length > 0;
 	}
 }

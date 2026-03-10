@@ -56,10 +56,23 @@ export function createCloudResumeDocument(payload: CreateDocumentPayload): Promi
 	}).then((res) => res.data);
 }
 
-export function updateCloudDocument(id: string, fields: Record<string, string>): Promise<DocumentDetail> {
+/** Updates only the given field values (send changed fields only). */
+export function updateCloudDocumentFields(id: string, changedFields: Record<string, string>): Promise<DocumentDetail> {
 	return request<UpdateDocumentResponse>(`/documents/${id}`, {
 		method: "PATCH",
-		body: JSON.stringify({ fields }),
+		body: JSON.stringify({ fields: changedFields }),
+	}).then((res) => res.data);
+}
+
+export function updateCloudDocument(
+	id: string,
+	payload: {
+		title?: string;
+	},
+): Promise<DocumentDetail> {
+	return request<UpdateDocumentResponse>(`/documents/${id}`, {
+		method: "PATCH",
+		body: JSON.stringify(payload),
 	}).then((res) => res.data);
 }
 

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import OpenAI from "openai";
 import { PDFParse } from "pdf-parse";
+import { LlmUsageService } from "../ai-usage/llm-usage.service";
 import type { ParsedResumeDto } from "./dto/parsed-resume.dto";
 
 const MAX_PDF_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -23,7 +24,7 @@ Respond with a single JSON object: { "title": "...", "fieldValues": { "content.p
 export class ParsePdfService {
 	private openai: OpenAI | null = null;
 
-	constructor() {
+	constructor(private readonly llmUsageService: LlmUsageService) {
 		const apiKey = process.env.OPENAI_API_KEY;
 		if (apiKey) {
 			this.openai = new OpenAI({ apiKey });
@@ -62,17 +63,36 @@ export class ParsePdfService {
 	private async parseResumeWithLlm(text: string): Promise<ParsedResumeDto> {
 		if (!this.openai) throw new Error("OpenAI client not configured");
 
+		const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+		const userContent = `Extract resume data from this text:\n\n${text.slice(0, 12000)}`;
+		const startMs = Date.now();
+
 		const response = await this.openai.chat.completions.create({
-			model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+			model,
 			messages: [
 				{ role: "system", content: RESUME_EXTRACT_SYSTEM },
-				{ role: "user", content: `Extract resume data from this text:\n\n${text.slice(0, 12000)}` },
+				{ role: "user", content: userContent },
 			],
 			response_format: { type: "json_object" },
 		});
 
+		const durationMs = Date.now() - startMs;
 		const content = response.choices[0]?.message?.content;
 		if (!content) throw new Error("Empty response from AI");
+
+		this.llmUsageService
+			.log({
+				type: "parse-resume",
+				model,
+				fieldKey: null,
+				systemPrompt: RESUME_EXTRACT_SYSTEM,
+				userInput: userContent,
+				output: content,
+				inputTokens: response.usage?.prompt_tokens ?? 0,
+				outputTokens: response.usage?.completion_tokens ?? 0,
+				durationMs,
+			})
+			.catch(() => {});
 
 		let parsed: { title?: string; fieldValues?: Record<string, string> };
 		try {

@@ -21,10 +21,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import multer from "multer";
 import { DocumentService } from "./document.service";
-import { CreateDocumentPayloadDto } from "./dto/create-document.dto";
-import type { ParsedResumeDto } from "./dto/parsed-resume.dto";
-import { RewriteFieldDto } from "./dto/rewrite-field.dto";
-import { UpdateDocumentPayloadDto } from "./dto/update-document.dto";
+import { CreateDocumentPayloadDto, type ParsedResumeDto, RewriteFieldDto, UpdateDocumentPayloadDto } from "./dto";
 import { ParsePdfService } from "./parse-pdf.service";
 
 @Controller("documents")

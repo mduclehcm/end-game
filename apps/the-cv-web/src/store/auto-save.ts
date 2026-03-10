@@ -1,5 +1,5 @@
 import { DocumentSource } from "@algo/cv-core";
-import { updateCloudDocument } from "@/lib/api";
+import { updateCloudDocumentFields } from "@/lib/api";
 import { Logger } from "@/lib/logger";
 import { updateLocalDocument } from "@/lib/storage";
 import type { useBuilderStore } from "./builder-store";
@@ -42,7 +42,7 @@ export function setupAutoSave(store: BuilderStore, throttleMs = 250) {
 
 		const save =
 			state.documentSource === DocumentSource.Cloud
-				? updateCloudDocument(state.documentId, changed)
+				? updateCloudDocumentFields(state.documentId, changed)
 				: updateLocalDocument(state.documentId, changed);
 
 		save
