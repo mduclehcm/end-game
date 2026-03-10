@@ -7,7 +7,7 @@ import { getDefaultDocument } from "./default-cv";
 const SECTION_KINDS = ["personal", "summary", "experience", "education", "skills", "languages", "settings"] as const;
 
 /** Kinds that appear in the sortable builder list. */
-const SORTABLE_SECTION_KINDS = ["experience", "education", "skills", "settings"] as const;
+const SORTABLE_SECTION_KINDS = ["experience", "education", "skills", "languages", "settings"] as const;
 
 function fieldPath(section: Section, entityIndex: number, fieldKey: string, multiEntity: boolean): string {
 	const kind = section.kind;

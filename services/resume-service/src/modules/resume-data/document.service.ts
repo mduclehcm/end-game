@@ -29,6 +29,29 @@ export class DocumentService {
 			payload.fieldValues && Object.keys(payload.fieldValues).length > 0
 				? await convertPathFieldValuesToDocumentData(payload.fieldValues)
 				: undefined;
+		// #region agent log
+		const fs = await import("fs");
+		const logEntry =
+			JSON.stringify({
+				sessionId: "d54723",
+				location: "document.service.ts:create",
+				message: "create called",
+				data: {
+					hasFieldValues: !!(payload.fieldValues && Object.keys(payload.fieldValues).length > 0),
+					fieldValuesCount: payload.fieldValues ? Object.keys(payload.fieldValues).length : 0,
+					convertedSections: data
+						? data.sections.map((s) => ({
+								kind: s.kind,
+								entityCount: s.entities.length,
+								entityIdCount: s.entityIds.length,
+							}))
+						: null,
+				},
+				timestamp: Date.now(),
+				hypothesisId: "H1",
+			}) + "\n";
+		fs.appendFileSync("/Users/duclm27/Sources/algovn/.cursor/debug-d54723.log", logEntry);
+		// #endregion
 		return this.repository.create({
 			title: payload.title,
 			data: data ?? null,

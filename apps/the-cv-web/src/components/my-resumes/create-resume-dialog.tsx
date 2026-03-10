@@ -52,7 +52,31 @@ export function CreateResumeDialog({ children }: CreateResumeDialogProps) {
 	const handleChoiceBlank = () => {
 		setMode("blank");
 		setTitle("");
-		setInitialData(getBlankDocumentData());
+		const blankData = getBlankDocumentData();
+		// #region agent log
+		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
+			method: "POST",
+			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d54723" },
+			body: JSON.stringify({
+				sessionId: "d54723",
+				location: "create-resume-dialog.tsx:handleChoiceBlank",
+				message: "getBlankDocumentData result",
+				data: {
+					sectionIds: blankData.sectionIds,
+					sectionCount: blankData.sections.length,
+					sectionsWithEntities: blankData.sections.map((s) => ({
+						kind: s.kind,
+						entityCount: s.entities.length,
+						entityIdCount: s.entityIds.length,
+					})),
+					fieldValuesCount: Object.keys(blankData.fieldValues).length,
+				},
+				timestamp: Date.now(),
+				hypothesisId: "H2",
+			}),
+		}).catch(() => {});
+		// #endregion
+		setInitialData(blankData);
 		setStep("form");
 	};
 

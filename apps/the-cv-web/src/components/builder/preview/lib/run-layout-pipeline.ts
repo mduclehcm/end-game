@@ -42,25 +42,18 @@ export async function runLayoutPipeline(
 	templateId?: string,
 	measureRoot?: HTMLElement | null,
 ): Promise<FragmentTree | null> {
-	const base = getDocumentView(data);
-	let document: Record<string, string> = { ...getDefaultDocument(), ...base };
+	const document = getDocumentView(data);
 	const id = templateId ?? document["settings.templateId"] ?? "default-simple";
-	let template: DocumentTemplate;
-	try {
-		template = getTemplate(id);
-	} catch {
-		template = getTemplate("default-simple");
-	}
-	let expanded = expandLayoutTree(template.layout, document, template);
-	// If expansion is empty (e.g. no field values or conditionals hiding everything), show default content
-	if (!expanded) {
-		document = getDefaultDocument();
-		expanded = expandLayoutTree(template.layout, document, template);
-	}
+
+	const template: DocumentTemplate = getTemplate(id);
+	if (!template) return null;
+
+	const expanded = expandLayoutTree(template.layout, document, template);
 	if (!expanded) return null;
 
 	const pageSettings = getPageSettingsFromDocument(document);
 	const rect = getContentRect(pageSettings);
+
 	const boxRoot = buildBoxTree(expanded, rect.contentWidth);
 	if (!boxRoot) return null;
 

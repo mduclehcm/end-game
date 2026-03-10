@@ -5,7 +5,7 @@ import { BuilderFieldInput } from "../input";
 import { Section } from "../section";
 import type { SectionProps } from "./share";
 
-export function AreasOfExpertiseFormSection({ sectionId, isDragging }: SectionProps) {
+export function LanguagesFormSection({ sectionId, isDragging }: SectionProps) {
 	const data = useBuilderStore((state) => state.data);
 	const addArrayItem = useBuilderStore((state) => state.addArrayItem);
 	const removeArrayItem = useBuilderStore((state) => state.removeArrayItem);
@@ -16,9 +16,9 @@ export function AreasOfExpertiseFormSection({ sectionId, isDragging }: SectionPr
 
 	return (
 		<Section
-			name="areas-of-expertise"
-			title="Areas of Expertise"
-			description="Choose 5 important skills that show you fit the position. Make sure they match the key skills mentioned in the job listing (especially when applying via an online system)."
+			name="languages"
+			title="Languages"
+			description="List the languages you speak and your level of proficiency for each."
 			draggable
 			isDragging={isDragging}
 		>
@@ -44,7 +44,7 @@ export function AreasOfExpertiseFormSection({ sectionId, isDragging }: SectionPr
 									type="button"
 									variant="ghost"
 									size="icon-xs"
-									aria-label={`Duplicate skill ${index + 1}`}
+									aria-label={`Duplicate language ${index + 1}`}
 									onClick={() => duplicateEntity(entity.id)}
 								>
 									<CopyIcon className="size-3.5" />
@@ -54,7 +54,7 @@ export function AreasOfExpertiseFormSection({ sectionId, isDragging }: SectionPr
 										type="button"
 										variant="ghost"
 										size="icon-xs"
-										aria-label={`Remove skill ${index + 1}`}
+										aria-label={`Remove language ${index + 1}`}
 										onClick={() => removeArrayItem(sectionId, index)}
 									>
 										<Trash2Icon className="size-3.5" />
@@ -72,7 +72,7 @@ export function AreasOfExpertiseFormSection({ sectionId, isDragging }: SectionPr
 							onClick={() => addArrayItem(sectionId)}
 						>
 							<PlusIcon className="size-3.5" />
-							Add skill
+							Add language
 						</Button>
 					)}
 				</>

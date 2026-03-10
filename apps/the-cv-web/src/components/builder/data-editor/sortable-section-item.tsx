@@ -6,6 +6,7 @@ import { SortableHandleContext } from "./section";
 import {
 	AreasOfExpertiseFormSection,
 	EducationFormSection,
+	LanguagesFormSection,
 	ProfessionalExperienceFormSection,
 	TechnicalProficienciesFormSection,
 } from "./sections";
@@ -15,6 +16,7 @@ const sectionComponentMap: Record<string, React.FC<SectionProps>> = {
 	experience: ProfessionalExperienceFormSection,
 	education: EducationFormSection,
 	skills: AreasOfExpertiseFormSection,
+	languages: LanguagesFormSection,
 	settings: TechnicalProficienciesFormSection,
 };
 

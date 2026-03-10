@@ -89,6 +89,28 @@ const BuilderPage = Page(() => {
 		const initialData = location.state?.initialDocumentData as DocumentData | undefined;
 		// When opening a newly created CV, use full initialData (sections/entities) if the loaded doc has none
 		const dataToSet = hasStructure ? doc.data : (initialData ?? doc.data);
+		// #region agent log
+		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
+			method: "POST",
+			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d54723" },
+			body: JSON.stringify({
+				sessionId: "d54723",
+				runId: "post-fix",
+				location: "builder.page.tsx:useEffect",
+				message: "setDocument data",
+				data: {
+					hasStructure,
+					docSectionCount: doc.data.sections.length,
+					docSectionIds: doc.data.sectionIds.length,
+					initialDataSections: initialData?.sections?.length ?? "none",
+					dataToSetSections: dataToSet.sections.length,
+					dataToSetEntities: dataToSet.sections.map((s) => ({ kind: s.kind, entityCount: s.entities.length })),
+				},
+				timestamp: Date.now(),
+				hypothesisId: "H3",
+			}),
+		}).catch(() => {});
+		// #endregion
 		setDocument({
 			...doc,
 			data: dataToSet,
