@@ -1,5 +1,5 @@
-import { type DocumentInfo, DocumentSource } from "@algo/cv-core";
-import { Cloud, HardDrive, MoreHorizontal, Trash2 } from "lucide-react";
+import type { DocumentInfo } from "@algo/cv-core";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RelativeTime } from "@/components/relative-time";
@@ -21,7 +21,6 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeleteDocument } from "@/hooks/use-document-actions";
 
 type ResumeCardProps = {
@@ -34,10 +33,8 @@ export function ResumeCard({ resume }: ResumeCardProps) {
 	const { deleteDocument, loading } = useDeleteDocument();
 
 	const onSelect = useCallback(() => {
-		navigate(resume.source === DocumentSource.Cloud ? `/c/${resume.id}` : `/r/${resume.id}`, {
-			state: { internal: true },
-		});
-	}, [navigate, resume.id, resume.source]);
+		navigate(`/doc/${resume.id}`, { state: { internal: true } });
+	}, [navigate, resume.id]);
 
 	const onDeleteClick = useCallback(() => {
 		setConfirmDelete(true);
@@ -46,10 +43,9 @@ export function ResumeCard({ resume }: ResumeCardProps) {
 	const handleConfirm = useCallback(() => {
 		deleteDocument({
 			id: resume.id,
-			isCloudDocument: resume.source === DocumentSource.Cloud,
 			onSuccess: () => setConfirmDelete(false),
 		});
-	}, [deleteDocument, resume.id, resume.source]);
+	}, [deleteDocument, resume.id]);
 
 	return (
 		<>
@@ -73,22 +69,6 @@ export function ResumeCard({ resume }: ResumeCardProps) {
 						</CardDescription>
 					</div>
 					<div className="flex items-center gap-2 shrink-0">
-						{resume.source !== DocumentSource.Cloud && (
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<HardDrive className="size-5 text-muted-foreground" aria-label="Local document" />
-								</TooltipTrigger>
-								<TooltipContent>Document is saved locally</TooltipContent>
-							</Tooltip>
-						)}
-						{resume.source === DocumentSource.Cloud && (
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Cloud className="size-5 text-muted-foreground" aria-label="Cloud document" />
-								</TooltipTrigger>
-								<TooltipContent>Document is saved in the cloud</TooltipContent>
-							</Tooltip>
-						)}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button variant="ghost" size="icon" className="size-8" onClick={(e) => e.stopPropagation()}>

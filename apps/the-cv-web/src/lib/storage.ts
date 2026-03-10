@@ -46,6 +46,42 @@ function setDocumentList(list: DocumentInfo[]) {
 	localStorage.setItem(LIST_KEY, JSON.stringify(list));
 }
 
+/** Save or update a document in local storage (mirror from cloud or after sync). Upserts by id. */
+export async function saveLocalMirror(doc: DocumentDetail): Promise<void> {
+	const key = getKey(doc.id);
+	localStorage.setItem(key, JSON.stringify(doc));
+	const list = await getDocumentList();
+	const info: DocumentInfo = {
+		id: doc.id,
+		title: doc.title,
+		source: doc.source,
+		createdAt: doc.createdAt,
+		updatedAt: doc.updatedAt,
+	};
+	const idx = list.findIndex((d) => d.id === doc.id);
+	const newList = idx >= 0 ? list.map((d, i) => (i === idx ? info : d)) : [...list, info];
+	setDocumentList(newList);
+}
+
+/** After syncing an offline-created doc: remove temp id from storage and list, add cloud doc. */
+export async function replaceTempIdWithCloudId(
+	tempId: string,
+	cloudDetail: DocumentDetail,
+): Promise<void> {
+	localStorage.removeItem(getKey(tempId));
+	const list = await getDocumentList();
+	const newList = list.filter((d) => d.id !== tempId);
+	const info: DocumentInfo = {
+		id: cloudDetail.id,
+		title: cloudDetail.title,
+		source: cloudDetail.source,
+		createdAt: cloudDetail.createdAt,
+		updatedAt: cloudDetail.updatedAt,
+	};
+	setDocumentList([...newList, info]);
+	localStorage.setItem(getKey(cloudDetail.id), JSON.stringify(cloudDetail));
+}
+
 export type SaveDocumentPayload = CreateDocumentPayload & {
 	initialData?: DocumentData;
 };

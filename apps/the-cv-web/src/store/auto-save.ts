@@ -1,8 +1,9 @@
-import { DocumentSource } from "@algo/cv-core";
 import { updateCloudDocumentFields } from "@/lib/api";
 import { Logger } from "@/lib/logger";
 import { updateLocalDocument } from "@/lib/storage";
+import { addPendingUpdate } from "@/lib/sync-queue";
 import type { useBuilderStore } from "./builder-store";
+import { useSyncStatusStore } from "./sync-status-store";
 
 type BuilderStore = typeof useBuilderStore;
 
@@ -40,17 +41,33 @@ export function setupAutoSave(store: BuilderStore, throttleMs = 250) {
 			return;
 		}
 
-		const save =
-			state.documentSource === DocumentSource.Cloud
-				? updateCloudDocumentFields(state.documentId, changed)
-				: updateLocalDocument(state.documentId, changed);
+		const id = state.documentId;
+		const isOnline = typeof navigator !== "undefined" && navigator.onLine;
 
-		save
+		// Always persist to local first
+		updateLocalDocument(id, changed)
 			.then(() => {
-				baselineFields = { ...store.getState().data.fieldValues };
-				store.getState().setSaveStatus("saved");
+				if (isOnline) {
+					return updateCloudDocumentFields(id, changed).then(
+						() => {
+							baselineFields = { ...store.getState().data.fieldValues };
+							store.getState().setSaveStatus("saved");
+						},
+						(err) => {
+							logger.errorObj("auto-save cloud failed", err);
+							useSyncStatusStore.getState().setSyncFailed(true);
+							addPendingUpdate({ id, fields: changed });
+							baselineFields = { ...store.getState().data.fieldValues };
+							store.getState().setSaveStatus("saved");
+						},
+					);
+				} else {
+					addPendingUpdate({ id, fields: changed });
+					baselineFields = { ...store.getState().data.fieldValues };
+					store.getState().setSaveStatus("saved");
+				}
 			})
-			.catch((err) => logger.errorObj("auto-save failed", err));
+			.catch((err) => logger.errorObj("auto-save local failed", err));
 	}
 
 	function throttledSave() {

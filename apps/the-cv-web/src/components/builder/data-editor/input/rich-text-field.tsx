@@ -1,4 +1,3 @@
-import { DocumentSource } from "@algo/cv-core";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { Editor } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -7,6 +6,7 @@ import { BoldIcon, ItalicIcon, ListIcon, ListOrderedIcon, SparklesIcon } from "l
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { rewriteCloudField } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useBuilderStore } from "@/store";
@@ -42,7 +42,7 @@ export function BuilderRichTextInput({
 	const setActiveField = useBuilderStore((state) => state.setActiveField);
 	const activeField = useBuilderStore((state) => state.activeField);
 	const documentId = useBuilderStore((state) => state.documentId);
-	const documentSource = useBuilderStore((state) => state.documentSource);
+	const { isOnline } = useOnlineStatus();
 	const wrapperRef = useRef<HTMLDivElement>(null);
 	const [rewriteLoading, setRewriteLoading] = useState(false);
 	const [rewriteError, setRewriteError] = useState<string | null>(null);
@@ -118,7 +118,7 @@ export function BuilderRichTextInput({
 	}, [editor]);
 
 	const handleAiReview = useCallback(async () => {
-		if (!documentId || documentSource !== DocumentSource.Cloud || !rewriteContext || !value?.trim()) return;
+		if (!documentId || !isOnline || !rewriteContext || !value?.trim()) return;
 		setRewriteError(null);
 		setRewriteLoading(true);
 		try {
@@ -154,13 +154,11 @@ export function BuilderRichTextInput({
 		} finally {
 			setRewriteLoading(false);
 		}
-	}, [documentId, documentSource, rewriteContext, value, field, setValue, editor]);
+	}, [documentId, isOnline, rewriteContext, value, field, setValue, editor]);
 
-	const showAiReview =
-		documentId &&
-		documentSource === DocumentSource.Cloud &&
-		rewriteContext != null &&
-		(value == null || String(value).trim() !== "");
+	const canShowAi = documentId && rewriteContext != null && (value == null || String(value).trim() !== "");
+	const showAiReview = canShowAi && isOnline;
+	const showAiDisabled = canShowAi && !isOnline;
 
 	return (
 		<div ref={wrapperRef} data-data-key={dataKey ?? undefined}>
@@ -211,6 +209,16 @@ export function BuilderRichTextInput({
 											<SparklesIcon />
 										)
 									}
+								/>
+							)}
+							{showAiDisabled && (
+								<ToolbarButton
+									editor={editor}
+									onClick={() => {}}
+									active={false}
+									disabled
+									title="AI review is available when online"
+									icon={<SparklesIcon />}
 								/>
 							)}
 						</div>

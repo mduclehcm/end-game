@@ -2,7 +2,6 @@ import type { DocumentData } from "@algo/cv-core";
 import { FileText, FileUp, Sparkles } from "lucide-react";
 import { type PropsWithChildren, type SyntheticEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -32,7 +31,6 @@ export function CreateResumeDialog({ children }: CreateResumeDialogProps) {
 	const [step, setStep] = useState<Step>("choice");
 	const [mode, setMode] = useState<CreateMode>("blank");
 	const [title, setTitle] = useState("");
-	const [localOnly, setLocalOnly] = useState(false);
 	const [initialData, setInitialData] = useState<DocumentData | undefined>(undefined);
 	const [parsing, setParsing] = useState(false);
 	const [parseError, setParseError] = useState<string | null>(null);
@@ -103,7 +101,6 @@ export function CreateResumeDialog({ children }: CreateResumeDialogProps) {
 		if (!trimmed) return;
 		createDocument({
 			title: trimmed,
-			localOnly,
 			initialData,
 		});
 		setOpen(false);
@@ -218,14 +215,6 @@ export function CreateResumeDialog({ children }: CreateResumeDialogProps) {
 									onChange={(e) => setTitle(e.target.value)}
 									autoFocus
 								/>
-							</div>
-							<div className="flex items-center gap-2">
-								<Checkbox
-									id="local-only"
-									checked={localOnly}
-									onCheckedChange={(checked) => setLocalOnly(checked === true)}
-								/>
-								<Label htmlFor="local-only">Local only</Label>
 							</div>
 							<DialogFooter>
 								{showBackFromForm && (

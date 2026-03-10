@@ -78,8 +78,7 @@ function Builder() {
 const BuilderPage = Page(() => {
 	const { id = "" } = useParams<{ id: string }>();
 	const location = useLocation();
-	const isCloudDocument = location.pathname.startsWith("/c/");
-	const documentDetailQuery = useDocumentDetail(id, isCloudDocument);
+	const documentDetailQuery = useDocumentDetail(id);
 	const [loading, setLoading] = useState(true);
 	const setDocument = useBuilderStore((state) => state.setDocument);
 
