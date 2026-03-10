@@ -68,6 +68,16 @@ export function ProfessionalExperienceFormSection({ sectionId, isDragging }: Sec
 											field={field.id}
 											placeholder={field.placeholder}
 											dataKey={section ? fieldPath(section, index, field.key ?? field.id) : undefined}
+											rewriteContext={
+												section
+													? {
+															sectionId: section.id,
+															entityId: entity.id,
+															sectionKind: section.kind,
+															fieldKey: field.key ?? "description",
+														}
+													: undefined
+											}
 										/>
 									) : (
 										<BuilderFieldInput

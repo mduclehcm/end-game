@@ -1,11 +1,16 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: hot reload */
 
+import path from "node:path";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { config } from "dotenv";
 import { ResumeModule } from "./resume.module";
 
-config(); // load .env before app bootstrap so DATABASE_URL etc. are set
+// Load .env: first from cwd, then from monorepo root (when running from services/resume-service)
+config();
+if (!process.env.OPENAI_API_KEY) {
+	config({ path: path.resolve(process.cwd(), "../../.env") });
+}
 
 async function bootstrap() {
 	const app = await NestFactory.create(ResumeModule);

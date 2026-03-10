@@ -1,11 +1,13 @@
+import { DocumentSource } from "@algo/cv-core";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { Editor } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { BoldIcon, ItalicIcon, ListIcon, ListOrderedIcon } from "lucide-react";
+import { BoldIcon, ItalicIcon, ListIcon, ListOrderedIcon, SparklesIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { rewriteCloudField } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useBuilderStore } from "@/store";
 
@@ -17,6 +19,13 @@ type BuilderRichTextInputProps = {
 	field: string;
 	/** Document path for this field (e.g. content.summary.text). When set, focus will set active field in preview. */
 	dataKey?: string;
+	/** Context for AI rewrite: section/id, entity id, section kind, field key. When set, AI review button is shown for cloud docs. */
+	rewriteContext?: {
+		sectionId: string;
+		entityId: string;
+		sectionKind: string;
+		fieldKey: string;
+	};
 };
 
 export function BuilderRichTextInput({
@@ -26,12 +35,17 @@ export function BuilderRichTextInput({
 	placeholder = "Start writing…",
 	field,
 	dataKey,
+	rewriteContext,
 }: BuilderRichTextInputProps) {
 	const value = useBuilderStore((state) => state.data.fieldValues[field] ?? "");
 	const setValue = useBuilderStore((state) => state.setFieldValue);
 	const setActiveField = useBuilderStore((state) => state.setActiveField);
 	const activeField = useBuilderStore((state) => state.activeField);
+	const documentId = useBuilderStore((state) => state.documentId);
+	const documentSource = useBuilderStore((state) => state.documentSource);
 	const wrapperRef = useRef<HTMLDivElement>(null);
+	const [rewriteLoading, setRewriteLoading] = useState(false);
+	const [rewriteError, setRewriteError] = useState<string | null>(null);
 
 	const editor = useEditor({
 		extensions: [
@@ -103,6 +117,51 @@ export function BuilderRichTextInput({
 		};
 	}, [editor]);
 
+	const handleAiReview = useCallback(async () => {
+		if (!documentId || documentSource !== DocumentSource.Cloud || !rewriteContext || !value?.trim()) return;
+		setRewriteError(null);
+		setRewriteLoading(true);
+		try {
+			const result = await rewriteCloudField(documentId, {
+				sectionId: rewriteContext.sectionId,
+				entityId: rewriteContext.entityId,
+				fieldId: field,
+				sectionKind: rewriteContext.sectionKind,
+				fieldKey: rewriteContext.fieldKey,
+				apply: false,
+			});
+			const newValue = "value" in result ? result.value : "";
+			if (newValue) {
+				setValue(field, newValue);
+				editor?.commands.setContent(newValue, { emitUpdate: false });
+			}
+		} catch (err) {
+			// #region agent log
+			fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
+				body: JSON.stringify({
+					sessionId: "c6e154",
+					location: "rich-text-field.tsx:handleAiReview",
+					message: "handleAiReview catch",
+					data: { errMessage: err instanceof Error ? err.message : String(err) },
+					timestamp: Date.now(),
+					hypothesisId: "H4",
+				}),
+			}).catch(() => {});
+			// #endregion
+			setRewriteError(err instanceof Error ? err.message : "AI review failed");
+		} finally {
+			setRewriteLoading(false);
+		}
+	}, [documentId, documentSource, rewriteContext, value, field, setValue, editor]);
+
+	const showAiReview =
+		documentId &&
+		documentSource === DocumentSource.Cloud &&
+		rewriteContext != null &&
+		(value == null || String(value).trim() !== "");
+
 	return (
 		<div ref={wrapperRef} data-data-key={dataKey ?? undefined}>
 			<Field className={cn("flex flex-col gap-2", className)}>
@@ -138,7 +197,26 @@ export function BuilderRichTextInput({
 								title="Numbered list"
 								icon={<ListOrderedIcon />}
 							/>
+							{showAiReview && (
+								<ToolbarButton
+									editor={editor}
+									onClick={handleAiReview}
+									active={false}
+									disabled={rewriteLoading}
+									title={rewriteError ?? "AI review"}
+									icon={
+										rewriteLoading ? (
+											<span className="size-4 animate-pulse rounded bg-muted-foreground/50" />
+										) : (
+											<SparklesIcon />
+										)
+									}
+								/>
+							)}
 						</div>
+					)}
+					{rewriteError && (
+						<p className="border-input bg-destructive/10 px-2 py-1 text-destructive text-xs">{rewriteError}</p>
 					)}
 					<EditorContent editor={editor} />
 				</div>
@@ -153,12 +231,14 @@ function ToolbarButton({
 	active,
 	title,
 	icon,
+	disabled,
 }: {
 	editor: Editor;
 	onClick: () => void;
 	active: boolean;
 	title: string;
 	icon: React.ReactNode;
+	disabled?: boolean;
 }) {
 	return (
 		<Button
@@ -167,8 +247,10 @@ function ToolbarButton({
 			size="icon-sm"
 			title={title}
 			aria-pressed={active}
+			disabled={disabled}
 			className={cn(active && "bg-muted text-foreground")}
 			onClick={() => {
+				if (disabled) return;
 				onClick();
 				editor.commands.focus();
 			}}

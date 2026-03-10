@@ -1,3 +1,4 @@
+import type { DocumentDetail } from "@algo/cv-core";
 import {
 	CreateDocumentResponse,
 	DeleteDocumentResponse,
@@ -22,6 +23,7 @@ import multer from "multer";
 import { DocumentService } from "./document.service";
 import { CreateDocumentPayloadDto } from "./dto/create-document.dto";
 import type { ParsedResumeDto } from "./dto/parsed-resume.dto";
+import { RewriteFieldDto } from "./dto/rewrite-field.dto";
 import { UpdateDocumentPayloadDto } from "./dto/update-document.dto";
 import { ParsePdfService } from "./parse-pdf.service";
 
@@ -53,6 +55,15 @@ export class DocumentController {
 		return {
 			data: documents,
 		};
+	}
+
+	@Post(":id/rewrite-field")
+	async rewriteField(
+		@Param("id") id: string,
+		@Body() dto: RewriteFieldDto,
+	): Promise<{ data: { value: string } | DocumentDetail }> {
+		const result = await this.documentService.rewriteField(id, dto);
+		return { data: result };
 	}
 
 	@Get(":id")

@@ -19,7 +19,7 @@ export function ProfessionalSummaryFormSection() {
 			draggable={false}
 		>
 			{() =>
-				textField && section ? (
+				textField && section && entity ? (
 					<BuilderRichTextInput
 						className="col-span-2 my-2"
 						name="professional-summary"
@@ -27,6 +27,12 @@ export function ProfessionalSummaryFormSection() {
 						placeholder="e.g. Senior engineer with 10+ years…"
 						field={textField.id}
 						dataKey={fieldPath(section, 0, textField.key ?? textField.id)}
+						rewriteContext={{
+							sectionId: section.id,
+							entityId: entity.id,
+							sectionKind: section.kind,
+							fieldKey: textField.key ?? "text",
+						}}
 					/>
 				) : null
 			}
