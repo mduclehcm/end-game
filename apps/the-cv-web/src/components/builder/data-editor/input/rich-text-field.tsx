@@ -3,7 +3,7 @@ import type { Editor } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { BoldIcon, ItalicIcon, ListIcon, ListOrderedIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,8 @@ export function BuilderRichTextInput({
 	const value = useBuilderStore((state) => state.data.fieldValues[field] ?? "");
 	const setValue = useBuilderStore((state) => state.setFieldValue);
 	const setActiveField = useBuilderStore((state) => state.setActiveField);
+	const activeField = useBuilderStore((state) => state.activeField);
+	const wrapperRef = useRef<HTMLDivElement>(null);
 
 	const editor = useEditor({
 		extensions: [
@@ -78,6 +80,16 @@ export function BuilderRichTextInput({
 		}
 	}, [editor, value]);
 
+	// When preview sets activeField to this field, scroll into view and focus (e.g. click on preview element)
+	useEffect(() => {
+		if (dataKey == null || activeField !== dataKey || !editor) return;
+		const wrapper = wrapperRef.current;
+		if (!wrapper) return;
+		if (wrapper.contains(document.activeElement)) return; // Already focused from data editor
+		wrapper.scrollIntoView({ block: "nearest", behavior: "smooth" });
+		requestAnimationFrame(() => editor.commands.focus());
+	}, [dataKey, activeField, editor]);
+
 	// Re-render toolbar when selection/content changes so active states stay in sync
 	const [, setToolbarTick] = useState(0);
 	useEffect(() => {
@@ -92,44 +104,46 @@ export function BuilderRichTextInput({
 	}, [editor]);
 
 	return (
-		<Field className={cn("flex flex-col gap-2", className)}>
-			<FieldLabel htmlFor={name}>{label}</FieldLabel>
-			<div className="overflow-hidden rounded-md border border-input">
-				{editor && (
-					<div className="flex flex-wrap items-center gap-0.5 border-b border-input bg-muted/50 p-1">
-						<ToolbarButton
-							editor={editor}
-							onClick={() => editor.chain().focus().toggleBold().run()}
-							active={editor.isActive("bold")}
-							title="Bold"
-							icon={<BoldIcon />}
-						/>
-						<ToolbarButton
-							editor={editor}
-							onClick={() => editor.chain().focus().toggleItalic().run()}
-							active={editor.isActive("italic")}
-							title="Italic"
-							icon={<ItalicIcon />}
-						/>
-						<ToolbarButton
-							editor={editor}
-							onClick={() => editor.chain().focus().toggleBulletList().run()}
-							active={editor.isActive("bulletList")}
-							title="Bullet list"
-							icon={<ListIcon />}
-						/>
-						<ToolbarButton
-							editor={editor}
-							onClick={() => editor.chain().focus().toggleOrderedList().run()}
-							active={editor.isActive("orderedList")}
-							title="Numbered list"
-							icon={<ListOrderedIcon />}
-						/>
-					</div>
-				)}
-				<EditorContent editor={editor} />
-			</div>
-		</Field>
+		<div ref={wrapperRef} data-data-key={dataKey ?? undefined}>
+			<Field className={cn("flex flex-col gap-2", className)}>
+				<FieldLabel htmlFor={name}>{label}</FieldLabel>
+				<div className="overflow-hidden rounded-md border border-input">
+					{editor && (
+						<div className="flex flex-wrap items-center gap-0.5 border-b border-input bg-muted/50 p-1">
+							<ToolbarButton
+								editor={editor}
+								onClick={() => editor.chain().focus().toggleBold().run()}
+								active={editor.isActive("bold")}
+								title="Bold"
+								icon={<BoldIcon />}
+							/>
+							<ToolbarButton
+								editor={editor}
+								onClick={() => editor.chain().focus().toggleItalic().run()}
+								active={editor.isActive("italic")}
+								title="Italic"
+								icon={<ItalicIcon />}
+							/>
+							<ToolbarButton
+								editor={editor}
+								onClick={() => editor.chain().focus().toggleBulletList().run()}
+								active={editor.isActive("bulletList")}
+								title="Bullet list"
+								icon={<ListIcon />}
+							/>
+							<ToolbarButton
+								editor={editor}
+								onClick={() => editor.chain().focus().toggleOrderedList().run()}
+								active={editor.isActive("orderedList")}
+								title="Numbered list"
+								icon={<ListOrderedIcon />}
+							/>
+						</div>
+					)}
+					<EditorContent editor={editor} />
+				</div>
+			</Field>
+		</div>
 	);
 }
 

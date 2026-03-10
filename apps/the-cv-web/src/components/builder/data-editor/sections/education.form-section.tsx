@@ -1,4 +1,4 @@
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { CopyIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fieldPath } from "@/core/layout/document-view";
 import { findSection, getOrderedEntities, useBuilderStore } from "@/store";
@@ -10,6 +10,7 @@ export function EducationFormSection({ sectionId, isDragging }: SectionProps) {
 	const data = useBuilderStore((state) => state.data);
 	const addArrayItem = useBuilderStore((state) => state.addArrayItem);
 	const removeArrayItem = useBuilderStore((state) => state.removeArrayItem);
+	const duplicateEntity = useBuilderStore((state) => state.duplicateEntity);
 
 	const section = sectionId ? findSection(data, sectionId) : undefined;
 	const entities = section ? getOrderedEntities(section) : [];
@@ -31,16 +32,29 @@ export function EducationFormSection({ sectionId, isDragging }: SectionProps) {
 						>
 							<div className="flex items-center justify-between gap-2">
 								<span className="text-xs font-medium text-muted-foreground">Education #{index + 1}</span>
-								{entities.length > 1 && sectionId && (
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon-xs"
-										aria-label={`Remove education ${index + 1}`}
-										onClick={() => removeArrayItem(sectionId, index)}
-									>
-										<Trash2Icon className="size-3.5" />
-									</Button>
+								{sectionId && (
+									<div className="flex items-center gap-0.5">
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon-xs"
+											aria-label={`Duplicate education ${index + 1}`}
+											onClick={() => duplicateEntity(entity.id)}
+										>
+											<CopyIcon className="size-3.5" />
+										</Button>
+										{entities.length > 1 && (
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon-xs"
+												aria-label={`Remove education ${index + 1}`}
+												onClick={() => removeArrayItem(sectionId, index)}
+											>
+												<Trash2Icon className="size-3.5" />
+											</Button>
+										)}
+									</div>
 								)}
 							</div>
 							<div className="grid grid-cols-2 gap-4">

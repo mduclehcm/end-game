@@ -38,6 +38,8 @@ export interface DocumentSlice {
 	removeArrayItem: (sectionId: string, index: number) => void;
 	addEntityItem: (sectionId: string) => void;
 	removeEntityItem: (entityId: string) => void;
+	/** Duplicate an entity (e.g. experience or education entry) and insert it right after the original. */
+	duplicateEntity: (entityId: string) => void;
 	reorderSectionIds: (activeId: string, overId: string) => void;
 
 	setSaveStatus: (status: SaveStatus) => void;
@@ -157,6 +159,44 @@ export const createDocumentSlice: StateCreator<DocumentSlice> = (set) => ({
 		set((state) => {
 			const next = state.data.sections.filter((s) => s.id !== entityId);
 			return { data: { ...state.data, sections: next } };
+		});
+	},
+	duplicateEntity: (entityId) => {
+		set((state) => {
+			const section = state.data.sections.find((s) => s.entityIds.includes(entityId));
+			if (!section) return state;
+
+			const entity = section.entities.find((e) => e.id === entityId);
+			if (!entity) return state;
+
+			const index = section.entityIds.indexOf(entityId);
+			const clonedFields = cloneEntityFields(entity.fields);
+			const newEntity: Entity = {
+				id: nanoid(10),
+				kind: entity.kind,
+				fields: clonedFields,
+			};
+
+			const entityIds = [...section.entityIds];
+			const entities = [...section.entities, newEntity];
+			entityIds.splice(index + 1, 0, newEntity.id);
+
+			const nextFieldValues = { ...state.data.fieldValues };
+			for (let i = 0; i < entity.fields.length; i++) {
+				const oldFieldId = entity.fields[i].id;
+				const newFieldId = clonedFields[i].id;
+				nextFieldValues[newFieldId] = state.data.fieldValues[oldFieldId] ?? "";
+			}
+
+			const nextSections = state.data.sections.map((s) => (s.id === section.id ? { ...s, entityIds, entities } : s));
+
+			return {
+				data: {
+					...state.data,
+					sections: nextSections,
+					fieldValues: nextFieldValues,
+				},
+			};
 		});
 	},
 	reorderSectionIds: (activeId, overId) => {
