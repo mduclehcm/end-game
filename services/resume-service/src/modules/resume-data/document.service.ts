@@ -29,29 +29,6 @@ export class DocumentService {
 			payload.fieldValues && Object.keys(payload.fieldValues).length > 0
 				? await convertPathFieldValuesToDocumentData(payload.fieldValues)
 				: undefined;
-		// #region agent log
-		const fs = await import("fs");
-		const logEntry =
-			JSON.stringify({
-				sessionId: "d54723",
-				location: "document.service.ts:create",
-				message: "create called",
-				data: {
-					hasFieldValues: !!(payload.fieldValues && Object.keys(payload.fieldValues).length > 0),
-					fieldValuesCount: payload.fieldValues ? Object.keys(payload.fieldValues).length : 0,
-					convertedSections: data
-						? data.sections.map((s) => ({
-								kind: s.kind,
-								entityCount: s.entities.length,
-								entityIdCount: s.entityIds.length,
-							}))
-						: null,
-				},
-				timestamp: Date.now(),
-				hypothesisId: "H1",
-			}) + "\n";
-		fs.appendFileSync("/Users/duclm27/Sources/algovn/.cursor/debug-d54723.log", logEntry);
-		// #endregion
 		return this.repository.create({
 			title: payload.title,
 			data: data ?? null,
@@ -85,20 +62,6 @@ export class DocumentService {
 			apply?: boolean;
 		},
 	): Promise<{ value: string } | DocumentDetail> {
-		// #region agent log
-		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-			body: JSON.stringify({
-				sessionId: "c6e154",
-				location: "document.service.ts:rewriteField",
-				message: "rewriteField entered",
-				data: { id, fieldId: payload.fieldId },
-				timestamp: Date.now(),
-				hypothesisId: "H2",
-			}),
-		}).catch(() => {});
-		// #endregion
 		const document = await this.findById(id);
 		const currentValue = document.data?.fieldValues?.[payload.fieldId];
 		if (currentValue === undefined || currentValue === "") {

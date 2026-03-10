@@ -93,44 +93,12 @@ export type RewriteFieldPayload = {
 
 export async function rewriteCloudField(id: string, payload: RewriteFieldPayload): Promise<RewriteFieldResult> {
 	const body = { ...payload };
-	// #region agent log
 	const path = `${BASE_URL}/documents/${id}/rewrite-field`;
-	fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-		method: "POST",
-		headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-		body: JSON.stringify({
-			sessionId: "c6e154",
-			location: "api.ts:rewriteCloudField",
-			message: "rewriteCloudField request",
-			data: { path, id },
-			timestamp: Date.now(),
-			hypothesisId: "H4",
-		}),
-	}).catch(() => {});
-	// #endregion
 	const res = await fetch(path, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(body),
 	});
-	// #region agent log
-	if (!res.ok) {
-		const text = await res.text();
-		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-			body: JSON.stringify({
-				sessionId: "c6e154",
-				location: "api.ts:rewriteCloudField",
-				message: "rewrite-field non-OK response",
-				data: { status: res.status, statusText: res.statusText, body: text?.slice(0, 500) },
-				timestamp: Date.now(),
-				hypothesisId: "H1",
-			}),
-		}).catch(() => {});
-		throw new Error(`API ${res.status}: ${res.statusText}`);
-	}
-	// #endregion
 	const json = (await res.json()) as { data: { value: string } | DocumentDetail };
 	return json.data;
 }

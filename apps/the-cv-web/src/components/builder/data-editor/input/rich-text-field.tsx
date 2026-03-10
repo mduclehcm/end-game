@@ -136,20 +136,6 @@ export function BuilderRichTextInput({
 				editor?.commands.setContent(newValue, { emitUpdate: false });
 			}
 		} catch (err) {
-			// #region agent log
-			fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-				method: "POST",
-				headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c6e154" },
-				body: JSON.stringify({
-					sessionId: "c6e154",
-					location: "rich-text-field.tsx:handleAiReview",
-					message: "handleAiReview catch",
-					data: { errMessage: err instanceof Error ? err.message : String(err) },
-					timestamp: Date.now(),
-					hypothesisId: "H4",
-				}),
-			}).catch(() => {});
-			// #endregion
 			setRewriteError(err instanceof Error ? err.message : "AI review failed");
 		} finally {
 			setRewriteLoading(false);
