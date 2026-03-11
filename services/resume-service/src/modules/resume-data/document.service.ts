@@ -1,10 +1,10 @@
 import type { DocumentDetail } from "@algo/cv-core";
 import { CreateDocumentPayload, UpdateDocumentPayload } from "@algo/cv-core";
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { DocumentRepository } from "./document.repository";
 import { CreateDocumentUseCase } from "./use-cases/create-document.use-case";
 import { RewriteFieldUseCase } from "./use-cases/rewrite-field.use-case";
 import { UpdateDocumentUseCase } from "./use-cases/update-document.use-case";
-import { DocumentRepository } from "./document.repository";
 
 @Injectable()
 export class DocumentService {

@@ -2,8 +2,8 @@ import { ConflictException, Injectable } from "@nestjs/common";
 import { hash } from "bcryptjs";
 import type { UserRow } from "../../database/schema";
 import type { AuthResponseDto } from "./dto/auth-response.dto";
-import { UserRepository } from "./user.repository";
 import { TokenService } from "./token.service";
+import { UserRepository } from "./user.repository";
 
 export interface RegisterPayload {
 	email: string;

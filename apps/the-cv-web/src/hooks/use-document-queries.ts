@@ -1,10 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
+import { documentQueryKeys } from "@/hooks/document-query-keys";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { fetchCloudDocumentList } from "@/lib/api";
 import { saveLocalMirror } from "@/lib/storage";
 import { mergeAndSortDocuments, mergeCloudWithLocalPending } from "@/lib/utils";
-import { documentQueryKeys } from "@/hooks/document-query-keys";
-import { useOnlineStatus } from "@/hooks/use-online-status";
-import { useQuery } from "@tanstack/react-query";
 import { useCloudDocumentDetailQuery } from "./use-cloud-document-queries";
 import { useLocalDocumentDetailQuery, useLocalDocumentListQuery } from "./use-local-document-queries";
 

@@ -5,11 +5,11 @@
 export {
 	ARRAY_SECTIONS,
 	CONTENT_PREFIX,
+	isArraySection,
+	isRewriteSupported,
 	SECTION_KINDS,
 	SECTION_KINDS_LIST,
 	SETTINGS_PREFIX,
-	STATIC_SECTIONS,
-	isArraySection,
-	isRewriteSupported,
 	type SectionKind,
+	STATIC_SECTIONS,
 } from "@algo/cv-core";

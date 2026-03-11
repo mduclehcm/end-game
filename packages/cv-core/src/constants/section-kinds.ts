@@ -8,11 +8,7 @@ export const SETTINGS_PREFIX = "settings.";
 
 export const STATIC_SECTIONS = ["personal", "summary"] as const;
 export const ARRAY_SECTIONS = ["experience", "education", "skills", "languages"] as const;
-export const SECTION_KINDS = [
-	...STATIC_SECTIONS,
-	...ARRAY_SECTIONS,
-	"settings",
-] as const;
+export const SECTION_KINDS = [...STATIC_SECTIONS, ...ARRAY_SECTIONS, "settings"] as const;
 
 export type SectionKind = (typeof SECTION_KINDS)[number];
 

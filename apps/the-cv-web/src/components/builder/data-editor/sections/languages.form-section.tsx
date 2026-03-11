@@ -25,10 +25,7 @@ export function LanguagesFormSection({ sectionId, isDragging }: SectionProps) {
 			{() => (
 				<>
 					{entities.map((entity, index) => (
-						<div
-							key={entity.id}
-							className="col-span-2 flex items-center gap-2"
-						>
+						<div key={entity.id} className="col-span-2 flex items-center gap-2">
 							{entity.fields.map((field) => (
 								<BuilderFieldInput
 									key={field.id}

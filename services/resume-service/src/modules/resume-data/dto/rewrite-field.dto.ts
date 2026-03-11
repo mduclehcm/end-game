@@ -1,5 +1,5 @@
-import { IsBoolean, IsOptional, IsString, MinLength } from "class-validator";
 import type { RewriteFieldPayload } from "@algo/cv-core";
+import { IsBoolean, IsOptional, IsString, MinLength } from "class-validator";
 
 export class RewriteFieldDto implements RewriteFieldPayload {
 	@IsString()

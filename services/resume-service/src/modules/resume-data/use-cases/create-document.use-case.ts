@@ -1,8 +1,7 @@
-import type { CreateDocumentPayload, DocumentData } from "@algo/cv-core";
-import type { DocumentDetail } from "@algo/cv-core";
-import { Injectable } from "@nestjs/common";
+import type { CreateDocumentPayload, DocumentData, DocumentDetail } from "@algo/cv-core";
 import { convertPathFieldValuesToDocumentData } from "@domain";
-import type { DocumentRepository } from "../document.repository";
+import { Injectable } from "@nestjs/common";
+import { DocumentRepository } from "../document.repository";
 
 @Injectable()
 export class CreateDocumentUseCase {

@@ -1,10 +1,4 @@
-import {
-	ARRAY_SECTIONS,
-	CONTENT_PREFIX,
-	SETTINGS_PREFIX,
-	STATIC_SECTIONS,
-	type SectionKind,
-} from "./section-kinds";
+import { ARRAY_SECTIONS, CONTENT_PREFIX, SETTINGS_PREFIX, type SectionKind, STATIC_SECTIONS } from "./section-kinds";
 
 export interface ParsedFieldId {
 	section: SectionKind | "unknown";

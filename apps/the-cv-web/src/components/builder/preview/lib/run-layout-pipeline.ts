@@ -11,7 +11,6 @@ import {
 	type PageSettings,
 	paginate,
 } from "@/core/layout";
-import { getDefaultDocument } from "@/data/default-cv";
 import { getTemplate } from "@/data/default-template";
 
 const DEFAULT_PAGE_SETTINGS: PageSettings = {

@@ -28,7 +28,7 @@ function textNode(content = "hello"): ExpandedTextNode {
 	return { id: uid(), kind: "text", content, style: {} };
 }
 
-function richTextNode(content = "<b>bold</b>"): { id: string; kind: "rich-text"; content: string; style: {} } {
+function richTextNode(content = "<b>bold</b>"): { id: string; kind: "rich-text"; content: string; style: object } {
 	return { id: uid(), kind: "rich-text", content, style: {} };
 }
 
@@ -63,8 +63,8 @@ describe("buildBoxTree – text node", () => {
 		_id = 0;
 		const node = buildBoxTree(textNode(), 800);
 		expect(node).not.toBeNull();
-		expect(node!.kind).toBe("block");
-		expect(node!.contentType).toBe("text");
+		expect(node?.kind).toBe("block");
+		expect(node?.contentType).toBe("text");
 	});
 
 	it("text node size starts at zero (measurement not yet done)", () => {

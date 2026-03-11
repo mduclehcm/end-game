@@ -1,24 +1,14 @@
-import {
-	Body,
-	Controller,
-	Get,
-	Post,
-	Req,
-	Res,
-	UnauthorizedException,
-	UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Post, Req, Res, UnauthorizedException, UseGuards } from "@nestjs/common";
 import type { Request, Response } from "express";
+import type { UserRow } from "../../database/schema";
 import { AuthService } from "./auth.service";
-import { LoginDto } from "./dto/login.dto";
-import { RegisterDto } from "./dto/register.dto";
 import { RefreshTokenBodyDto } from "./dto/refresh-token-body.dto";
+import { RegisterDto } from "./dto/register.dto";
 import { GoogleAuthGuard } from "./guards/google-auth.guard";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { ZaloAuthGuard } from "./guards/zalo-auth.guard";
 import type { JwtPayload } from "./strategies/jwt.strategy";
-import type { UserRow } from "../../database/schema";
 
 @Controller("auth")
 export class AuthController {

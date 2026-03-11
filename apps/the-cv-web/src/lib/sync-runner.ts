@@ -1,10 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
-import {
-	createCloudResumeDocument,
-	deleteCloudResumeDocument,
-	updateCloudDocumentFields,
-} from "@/lib/api";
+import { documentQueryKeys } from "@/hooks/document-query-keys";
+import { createCloudResumeDocument, deleteCloudResumeDocument, updateCloudDocumentFields } from "@/lib/api";
 import { Logger } from "@/lib/logger";
+import { deleteDocument, replaceTempIdWithCloudId, saveLocalMirror } from "@/lib/storage";
 import {
 	clearSyncQueue,
 	getSyncQueue,
@@ -12,12 +10,6 @@ import {
 	removePendingDelete,
 	removePendingUpdate,
 } from "@/lib/sync-queue";
-import {
-	deleteDocument,
-	replaceTempIdWithCloudId,
-	saveLocalMirror,
-} from "@/lib/storage";
-import { documentQueryKeys } from "@/hooks/document-query-keys";
 import { useSyncStatusStore } from "@/store/sync-status-store";
 
 const logger = new Logger("sync-runner");

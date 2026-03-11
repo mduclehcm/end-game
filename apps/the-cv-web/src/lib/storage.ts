@@ -64,10 +64,7 @@ export async function saveLocalMirror(doc: DocumentDetail): Promise<void> {
 }
 
 /** After syncing an offline-created doc: remove temp id from storage and list, add cloud doc. */
-export async function replaceTempIdWithCloudId(
-	tempId: string,
-	cloudDetail: DocumentDetail,
-): Promise<void> {
+export async function replaceTempIdWithCloudId(tempId: string, cloudDetail: DocumentDetail): Promise<void> {
 	localStorage.removeItem(getKey(tempId));
 	const list = await getDocumentList();
 	const newList = list.filter((d) => d.id !== tempId);

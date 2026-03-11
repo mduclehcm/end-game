@@ -21,10 +21,7 @@ function validate(config: Record<string, unknown>): Record<string, unknown> {
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
-			envFilePath: [
-				path.join(process.cwd(), ".env"),
-				path.resolve(process.cwd(), "../../.env"),
-			],
+			envFilePath: [path.join(process.cwd(), ".env"), path.resolve(process.cwd(), "../../.env")],
 			validate,
 		}),
 		TerminusModule,

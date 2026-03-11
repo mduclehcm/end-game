@@ -1,5 +1,4 @@
 import { Controller, Get } from "@nestjs/common";
-// biome-ignore lint/style/useImportType: HealthCheckService must be value import for Nest DI (emitDecoratorMetadata)
 import { HealthCheck, type HealthCheckResult, HealthCheckService } from "@nestjs/terminus";
 
 @Controller("health")

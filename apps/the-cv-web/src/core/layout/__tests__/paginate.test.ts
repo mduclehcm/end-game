@@ -137,7 +137,7 @@ describe("paginate – single page, content fits", () => {
 		const frags = allFragments(pages[0]);
 		const textFrag = frags.find((f) => f.content.kind === "text");
 		expect(textFrag).toBeDefined();
-		expect(textFrag!.y).toBe(RECT.contentTop);
+		expect(textFrag?.y).toBe(RECT.contentTop);
 	});
 
 	it("fragment width matches node width", () => {
@@ -147,7 +147,7 @@ describe("paginate – single page, content fits", () => {
 
 		const frags = allFragments(pages[0]);
 		const textFrag = frags.find((f) => f.content.kind === "text");
-		expect(textFrag!.width).toBe(100);
+		expect(textFrag?.width).toBe(100);
 	});
 
 	it("text fragment has lineStart=0 and full lineCount", () => {
@@ -157,10 +157,10 @@ describe("paginate – single page, content fits", () => {
 
 		const frags = allFragments(pages[0]);
 		const textFrag = frags.find((f) => f.content.kind === "text");
-		const content = textFrag!.content as FragmentTextContent;
+		const content = textFrag?.content as FragmentTextContent;
 		expect(content.lineStart).toBe(0);
 		expect(content.lineCount).toBe(2);
-		expect(textFrag!.nextFragmentId).toBeNull();
+		expect(textFrag?.nextFragmentId).toBeNull();
 	});
 
 	it("image node produces one fragment on one page", () => {
@@ -172,8 +172,8 @@ describe("paginate – single page, content fits", () => {
 		const frags = allFragments(pages[0]);
 		const imgFrag = frags.find((f) => f.content.kind === "image");
 		expect(imgFrag).toBeDefined();
-		expect(imgFrag!.y).toBe(RECT.contentTop);
-		expect(imgFrag!.height).toBe(80);
+		expect(imgFrag?.y).toBe(RECT.contentTop);
+		expect(imgFrag?.height).toBe(80);
 	});
 });
 
@@ -198,8 +198,9 @@ describe("paginate – text split across pages", () => {
 		const pages = paginate(node, RECT);
 
 		const frags0 = allFragments(pages[0]);
-		const textFrag0 = frags0.find((f) => f.content.kind === "text")!;
-		const content0 = textFrag0.content as FragmentTextContent;
+		const textFrag0 = frags0.find((f) => f.content.kind === "text");
+		expect(textFrag0).toBeDefined();
+		const content0 = (textFrag0 as NonNullable<typeof textFrag0>).content as FragmentTextContent;
 
 		expect(content0.lineStart).toBe(0);
 		expect(content0.lineCount).toBe(10); // floor(200 / 20)
@@ -211,8 +212,9 @@ describe("paginate – text split across pages", () => {
 		const pages = paginate(node, RECT);
 
 		const frags1 = allFragments(pages[1]);
-		const textFrag1 = frags1.find((f) => f.content.kind === "text")!;
-		const content1 = textFrag1.content as FragmentTextContent;
+		const textFrag1 = frags1.find((f) => f.content.kind === "text");
+		expect(textFrag1).toBeDefined();
+		const content1 = (textFrag1 as NonNullable<typeof textFrag1>).content as FragmentTextContent;
 
 		expect(content1.lineStart).toBe(10);
 		expect(content1.lineCount).toBe(5); // remaining 5 lines
@@ -225,10 +227,11 @@ describe("paginate – text split across pages", () => {
 
 		const frags0 = allFragments(pages[0]);
 		const frags1 = allFragments(pages[1]);
-		const frag0 = frags0.find((f) => f.content.kind === "text")!;
-		const frag1 = frags1.find((f) => f.content.kind === "text")!;
-
-		expect(frag0.nextFragmentId).toBe(frag1.id);
+		const frag0 = frags0.find((f) => f.content.kind === "text");
+		const frag1 = frags1.find((f) => f.content.kind === "text");
+		expect(frag0).toBeDefined();
+		expect(frag1).toBeDefined();
+		expect((frag0 as NonNullable<typeof frag0>).nextFragmentId).toBe((frag1 as NonNullable<typeof frag1>).id);
 	});
 
 	it("second page fragment starts at contentTop", () => {
@@ -237,8 +240,9 @@ describe("paginate – text split across pages", () => {
 		const pages = paginate(node, RECT);
 
 		const frags1 = allFragments(pages[1]);
-		const textFrag1 = frags1.find((f) => f.content.kind === "text")!;
-		expect(textFrag1.y).toBe(RECT.contentTop);
+		const textFrag1 = frags1.find((f) => f.content.kind === "text");
+		expect(textFrag1).toBeDefined();
+		expect((textFrag1 as NonNullable<typeof textFrag1>).y).toBe(RECT.contentTop);
 	});
 });
 
@@ -252,7 +256,7 @@ describe("paginate – unbreakable node", () => {
 		// First node takes 50 px, then unbreakable node is 100 px (150 px total, fits in 200 px)
 		const first = makeText(50);
 		const unbreakable = makeText(100, { unbreakable: true });
-		const root = makeBlock([first, unbreakable] as any);
+		const root = makeBlock([first, unbreakable] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		expect(pages).toHaveLength(1);
@@ -263,7 +267,7 @@ describe("paginate – unbreakable node", () => {
 		// First node takes 160 px, leaving 40 px; unbreakable node is 80 px → should move to page 2
 		const first = makeText(160);
 		const unbreakable = makeText(80, { unbreakable: true });
-		const root = makeBlock([first, unbreakable] as any);
+		const root = makeBlock([first, unbreakable] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		expect(pages).toHaveLength(2);
@@ -273,13 +277,13 @@ describe("paginate – unbreakable node", () => {
 		_idCounter = 0;
 		const first = makeText(160);
 		const unbreakable = makeText(80, { unbreakable: true });
-		const root = makeBlock([first, unbreakable] as any);
+		const root = makeBlock([first, unbreakable] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		const frags1 = allFragments(pages[1]);
 		const textFrag = frags1.find((f) => f.content.kind === "text");
 		// The unbreakable node should be at contentTop of page 2
-		expect(textFrag!.y).toBe(RECT.contentTop);
+		expect(textFrag?.y).toBe(RECT.contentTop);
 	});
 });
 
@@ -312,7 +316,7 @@ describe("paginate – container node", () => {
 		_idCounter = 0;
 		const text1 = makeText(40);
 		const text2 = makeText(60);
-		const root = makeBlock([text1, text2] as any);
+		const root = makeBlock([text1, text2] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		expect(pages).toHaveLength(1);
@@ -327,7 +331,7 @@ describe("paginate – container node", () => {
 		_idCounter = 0;
 		const text1 = makeText(40);
 		const text2 = makeText(60);
-		const root = makeBlock([text1, text2] as any);
+		const root = makeBlock([text1, text2] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		const topFrag = pages[0].fragments[0];
@@ -338,7 +342,7 @@ describe("paginate – container node", () => {
 	it("container block fragment x is at contentLeft, not contentLeft + padding", () => {
 		_idCounter = 0;
 		const text1 = makeText(40, { padding: 0 });
-		const root = makeBlock([text1] as any, { padding: 10 });
+		const root = makeBlock([text1] as TextBoxNode[], { padding: 10 });
 		const pages = paginate(root, RECT);
 
 		const topFrag = pages[0].fragments[0];
@@ -358,8 +362,8 @@ describe("paginate – margin handling", () => {
 		const pages = paginate(node, RECT);
 
 		const frags = allFragments(pages[0]);
-		const textFrag = frags.find((f) => f.content.kind === "text")!;
-		expect(textFrag.height).toBe(50); // 40 + 2*5
+		const textFrag = frags.find((f) => f.content.kind === "text");
+		expect(textFrag?.height).toBe(50); // 40 + 2*5
 	});
 
 	it("text fits check accounts for margin (totalHeightWithMargin <= remainingHeight)", () => {
@@ -382,8 +386,8 @@ describe("paginate – fragment position", () => {
 		const pages = paginate(node, RECT);
 
 		const frags = allFragments(pages[0]);
-		const textFrag = frags.find((f) => f.content.kind === "text")!;
-		expect(textFrag.position).toBe("absolute");
+		const textFrag = frags.find((f) => f.content.kind === "text");
+		expect(textFrag?.position).toBe("absolute");
 	});
 
 	it("node without position produces fragment with position flow", () => {
@@ -392,8 +396,8 @@ describe("paginate – fragment position", () => {
 		const pages = paginate(node, RECT);
 
 		const frags = allFragments(pages[0]);
-		const textFrag = frags.find((f) => f.content.kind === "text")!;
-		expect(textFrag.position).toBe("flow");
+		const textFrag = frags.find((f) => f.content.kind === "text");
+		expect(textFrag?.position).toBe("flow");
 	});
 });
 
@@ -401,14 +405,17 @@ describe("paginate – container margin", () => {
 	it("container with margin reserves space so first child y is below margin", () => {
 		_idCounter = 0;
 		const text1 = makeText(30);
-		const root = makeBlock([text1] as any, { margin: 10 });
+		const root = makeBlock([text1] as TextBoxNode[], { margin: 10 });
 		const pages = paginate(root, RECT);
 
 		const frags = allFragments(pages[0]);
-		const blockFrag = frags.find((f) => f.content.kind === "block")!;
-		const textFrag = (blockFrag.content as FragmentBlockContent).children.find((f) => f.content.kind === "text")!;
+		const blockFrag = frags.find((f) => f.content.kind === "block");
+		const textFrag =
+			blockFrag && (blockFrag.content as FragmentBlockContent).children.find((f) => f.content.kind === "text");
+		expect(blockFrag).toBeDefined();
+		expect(textFrag).toBeDefined();
 		// First child should start at contentTop + margin (10)
-		expect(textFrag.y).toBe(RECT.contentTop + 10);
+		expect(textFrag?.y).toBe(RECT.contentTop + 10);
 	});
 });
 
@@ -419,8 +426,8 @@ describe("paginate – image margin", () => {
 		const pages = paginate(node, RECT);
 
 		const frags = allFragments(pages[0]);
-		const imgFrag = frags.find((f) => f.content.kind === "image")!;
-		expect(imgFrag.height).toBe(72);
+		const imgFrag = frags.find((f) => f.content.kind === "image");
+		expect(imgFrag?.height).toBe(72);
 	});
 });
 
@@ -434,8 +441,9 @@ describe("paginate – flex-column container", () => {
 
 		expect(pages).toHaveLength(1);
 		const frags = allFragments(pages[0]);
-		const blockFrag = frags.find((f) => f.content.kind === "block")!;
-		const blockContent = blockFrag.content as FragmentBlockContent;
+		const blockFrag = frags.find((f) => f.content.kind === "block");
+		expect(blockFrag).toBeDefined();
+		const blockContent = (blockFrag as NonNullable<typeof blockFrag>).content as FragmentBlockContent;
 		expect(blockContent.children).toHaveLength(2);
 	});
 });
@@ -449,7 +457,7 @@ describe("paginate – multiple sibling nodes", () => {
 		_idCounter = 0;
 		const text1 = makeText(60);
 		const text2 = makeText(40);
-		const root = makeBlock([text1, text2] as any);
+		const root = makeBlock([text1, text2] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		const frags = allFragments(pages[0]);
@@ -465,7 +473,7 @@ describe("paginate – multiple sibling nodes", () => {
 		const text1 = makeText(80);
 		const text2 = makeText(80);
 		const text3 = makeText(80); // cumulative = 240 > 200
-		const root = makeBlock([text1, text2, text3] as any);
+		const root = makeBlock([text1, text2, text3] as TextBoxNode[]);
 		const pages = paginate(root, RECT);
 
 		expect(pages.length).toBeGreaterThanOrEqual(2);

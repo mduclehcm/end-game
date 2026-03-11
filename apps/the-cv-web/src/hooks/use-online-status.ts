@@ -4,9 +4,7 @@ import { runSyncQueue } from "@/lib/sync-runner";
 import { useSyncStatusStore } from "@/store/sync-status-store";
 
 export function useOnlineStatus() {
-	const [isOnline, setIsOnline] = useState(
-		typeof navigator !== "undefined" ? navigator.onLine : true,
-	);
+	const [isOnline, setIsOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
 	const queryClient = useQueryClient();
 	const syncFailed = useSyncStatusStore((s) => s.syncFailed);
 
