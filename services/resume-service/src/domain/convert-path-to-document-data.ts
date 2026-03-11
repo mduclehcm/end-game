@@ -42,7 +42,7 @@ export async function convertPathFieldValuesToDocumentData(
 
 		const entities: Entity[] = [];
 		const entityIds: string[] = [];
-		const multiEntity = isArraySection(kind) && entityCount > 1;
+		const multiEntity = isArraySection(kind);
 
 		for (let ei = 0; ei < entityCount; ei++) {
 			const entityId = nanoid(10);
