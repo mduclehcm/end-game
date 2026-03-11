@@ -8,7 +8,24 @@
 		"dev": {
 			"cache": false,
 			"persistent": true,
-			"passThroughEnv": ["DATABASE_URL", "PORT", "NODE_ENV", "OPENAI_API_KEY", "OPENAI_MODEL"]
+			"passThroughEnv": [
+				"DATABASE_URL",
+				"PORT",
+				"NODE_ENV",
+				"OPENAI_API_KEY",
+				"OPENAI_MODEL",
+				"JWT_SECRET",
+				"JWT_REFRESH_SECRET",
+				"JWT_EXPIRES_IN",
+				"JWT_REFRESH_EXPIRES_IN",
+				"GOOGLE_CLIENT_ID",
+				"GOOGLE_CLIENT_SECRET",
+				"GOOGLE_CALLBACK_URL",
+				"ZALO_APP_ID",
+				"ZALO_APP_SECRET",
+				"ZALO_CALLBACK_URL",
+				"AUTH_SERVICE_PORT"
+			]
 		},
 		"lint": {
 			"dependsOn": []
