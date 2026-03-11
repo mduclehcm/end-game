@@ -1,13 +1,7 @@
 import type { DocumentData, Entity } from "@algo/cv-core";
 import { createFieldsFromTemplate, ENTITY_FIELD_TEMPLATES } from "./entity-field-templates";
-
-const SECTION_KINDS = ["personal", "summary", "experience", "education", "skills", "languages", "settings"] as const;
-
-function fieldPath(kind: string, entityIndex: number, fieldKey: string, multiEntity: boolean): string {
-	if (kind === "settings") return `settings.${fieldKey}`;
-	if (!multiEntity) return `content.${kind}.${fieldKey}`;
-	return `content.${kind}.${entityIndex}.${fieldKey}`;
-}
+import { fieldPath } from "./field-path";
+import { CONTENT_PREFIX, isArraySection, SECTION_KINDS_LIST } from "./section-kinds";
 
 /**
  * Converts path-based field values (from LLM parse) to full DocumentData with section/entity/field
@@ -21,7 +15,7 @@ export async function convertPathFieldValuesToDocumentData(
 	const sections: DocumentData["sections"] = [];
 	const fieldValues: Record<string, string> = {};
 
-	for (const kind of SECTION_KINDS) {
+	for (const kind of SECTION_KINDS_LIST) {
 		const template = ENTITY_FIELD_TEMPLATES[kind];
 		if (!template) {
 			const id = nanoid(10);
@@ -34,8 +28,8 @@ export async function convertPathFieldValuesToDocumentData(
 		sectionIds.push(sectionId);
 
 		let entityCount = 1;
-		if (["experience", "education", "skills", "languages"].includes(kind)) {
-			const prefix = `content.${kind}.`;
+		if (isArraySection(kind)) {
+			const prefix = `${CONTENT_PREFIX}${kind}.`;
 			const indices = new Set<number>();
 			for (const key of Object.keys(initialByPath)) {
 				if (!key.startsWith(prefix)) continue;
@@ -48,8 +42,7 @@ export async function convertPathFieldValuesToDocumentData(
 
 		const entities: Entity[] = [];
 		const entityIds: string[] = [];
-		const isArraySection = ["experience", "education", "skills", "languages"].includes(kind);
-		const multiEntity = isArraySection && entityCount > 1;
+		const multiEntity = isArraySection(kind) && entityCount > 1;
 
 		for (let ei = 0; ei < entityCount; ei++) {
 			const entityId = nanoid(10);

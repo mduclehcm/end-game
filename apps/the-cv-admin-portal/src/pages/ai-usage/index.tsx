@@ -1,3 +1,4 @@
+import type { LlmUsageLog } from "@algo/cv-core";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { fetchAiUsage, type LlmUsageLog } from "@/lib/api";
+import { fetchAiUsage } from "@/lib/api";
 import { truncate } from "@/lib/truncate";
 
 const INPUT_OUTPUT_MAX = 80;

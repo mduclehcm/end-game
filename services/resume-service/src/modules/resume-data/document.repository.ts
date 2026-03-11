@@ -6,6 +6,7 @@ import type {
 	UpdateDocumentPayload,
 } from "@algo/cv-core";
 import { Inject, Injectable } from "@nestjs/common";
+import type { DocumentStore } from "@ports";
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { DRIZZLE } from "../../database/database.provider";
@@ -14,7 +15,7 @@ import { DocumentsTable, FieldValuesTable } from "../../database/schema";
 import { toDocumentDetail, toDocumentInfoList } from "./dto/utils";
 
 @Injectable()
-export class DocumentRepository {
+export class DocumentRepository implements DocumentStore {
 	constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof schema>) {}
 
 	async findAll(): Promise<DocumentInfo[]> {
@@ -64,25 +65,27 @@ export class DocumentRepository {
 
 	async update(id: string, payload: UpdateDocumentPayload): Promise<DocumentDetail | null> {
 		const { fields, title } = payload;
-		if (title !== undefined) {
-			await this.db.update(DocumentsTable).set({ title, updatedAt: new Date() }).where(eq(DocumentsTable.id, id));
-		}
-		if (fields !== undefined && Object.keys(fields).length > 0) {
-			const now = new Date();
-			for (const [fieldId, value] of Object.entries(fields)) {
-				await this.db
-					.insert(FieldValuesTable)
-					.values({ documentId: id, fieldId, value: value ?? "", updatedAt: now })
-					.onConflictDoUpdate({
-						target: [FieldValuesTable.documentId, FieldValuesTable.fieldId],
-						set: { value: value ?? "", updatedAt: now },
-					});
+		await this.db.transaction(async (tx) => {
+			if (title !== undefined) {
+				await tx.update(DocumentsTable).set({ title, updatedAt: new Date() }).where(eq(DocumentsTable.id, id));
 			}
-		}
+			if (fields !== undefined && Object.keys(fields).length > 0) {
+				const now = new Date();
+				for (const [fieldId, value] of Object.entries(fields)) {
+					await tx
+						.insert(FieldValuesTable)
+						.values({ documentId: id, fieldId, value: value ?? "", updatedAt: now })
+						.onConflictDoUpdate({
+							target: [FieldValuesTable.documentId, FieldValuesTable.fieldId],
+							set: { value: value ?? "", updatedAt: now },
+						});
+				}
+			}
+		});
 		return this.findById(id);
 	}
 
-	async remove(id: string) {
+	async remove(id: string): Promise<boolean> {
 		await this.db.delete(FieldValuesTable).where(eq(FieldValuesTable.documentId, id));
 		const results = await this.db.delete(DocumentsTable).where(eq(DocumentsTable.id, id)).returning();
 		return results.length > 0;

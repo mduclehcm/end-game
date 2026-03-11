@@ -44,7 +44,7 @@ export const defaultTemplate: DocumentTemplate = {
 		spaces: {
 			small: 8,
 			page: {
-				padding: 24,
+				padding: 56,
 			},
 		},
 	},

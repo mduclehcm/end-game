@@ -1,6 +1,7 @@
 import { IsBoolean, IsOptional, IsString, MinLength } from "class-validator";
+import type { RewriteFieldPayload } from "@algo/cv-core";
 
-export class RewriteFieldDto {
+export class RewriteFieldDto implements RewriteFieldPayload {
 	@IsString()
 	@MinLength(1, { message: "sectionId must not be empty" })
 	sectionId!: string;

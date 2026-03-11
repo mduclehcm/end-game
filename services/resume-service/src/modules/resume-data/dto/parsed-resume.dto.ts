@@ -1,8 +1,4 @@
 /**
- * Response shape for POST /documents/parse-pdf.
- * AI parses the resume PDF into structured field values using our document field keys.
+ * Re-export shared type from cv-core.
  */
-export interface ParsedResumeDto {
-	title?: string;
-	fieldValues: Record<string, string>;
-}
+export type { ParsedResumeDto } from "@algo/cv-core";

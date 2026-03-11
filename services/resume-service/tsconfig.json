@@ -23,7 +23,9 @@
 		"noFallthroughCasesInSwitch": false,
 
 		"paths": {
-			"@algo/cv-core": ["../../packages/cv-core/src/index.ts"]
+			"@algo/cv-core": ["../../packages/cv-core/src/index.ts"],
+			"@domain": ["./src/domain/index.ts"],
+			"@ports": ["./src/ports/index.ts"]
 		}
 	}
 }

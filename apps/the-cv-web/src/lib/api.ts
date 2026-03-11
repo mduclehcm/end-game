@@ -6,15 +6,13 @@ import type {
 	DocumentInfo,
 	GetDocumentListResponse,
 	GetDocumentResponse,
+	ParsedResumeDto,
+	RewriteFieldPayload,
+	RewriteFieldResult,
 	UpdateDocumentResponse,
 } from "@algo/cv-core";
 
 const BASE_URL = "/api/v1";
-
-export interface ParsedResumeResponse {
-	title?: string;
-	fieldValues: Record<string, string>;
-}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(`${BASE_URL}${path}`, {
@@ -27,7 +25,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	return res.json() as Promise<T>;
 }
 
-export async function parsePdfResume(file: File): Promise<ParsedResumeResponse> {
+export async function parsePdfResume(file: File): Promise<ParsedResumeDto> {
 	const formData = new FormData();
 	formData.append("file", file);
 	const res = await fetch(`${BASE_URL}/documents/parse-pdf`, {
@@ -37,7 +35,7 @@ export async function parsePdfResume(file: File): Promise<ParsedResumeResponse> 
 	if (!res.ok) {
 		throw new Error(`API ${res.status}: ${res.statusText}`);
 	}
-	const json = (await res.json()) as { data: ParsedResumeResponse };
+	const json = (await res.json()) as { data: ParsedResumeDto };
 	return json.data;
 }
 
@@ -80,17 +78,6 @@ export function deleteCloudResumeDocument(id: string): Promise<boolean> {
 	return request<DeleteDocumentResponse>(`/documents/${id}`, { method: "DELETE" }).then((res) => res.success);
 }
 
-export type RewriteFieldResult = { value: string } | DocumentDetail;
-
-export type RewriteFieldPayload = {
-	sectionId: string;
-	entityId: string;
-	fieldId: string;
-	sectionKind: string;
-	fieldKey: string;
-	apply?: boolean;
-};
-
 export async function rewriteCloudField(id: string, payload: RewriteFieldPayload): Promise<RewriteFieldResult> {
 	const body = { ...payload };
 	const path = `${BASE_URL}/documents/${id}/rewrite-field`;
@@ -99,6 +86,6 @@ export async function rewriteCloudField(id: string, payload: RewriteFieldPayload
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(body),
 	});
-	const json = (await res.json()) as { data: { value: string } | DocumentDetail };
+	const json = (await res.json()) as { data: RewriteFieldResult };
 	return json.data;
 }

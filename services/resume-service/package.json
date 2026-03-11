@@ -6,6 +6,8 @@
 	"scripts": {
 		"build": "nest build",
 		"dev": "nest build --webpack --webpackPath webpack-hrm.config.js --watch",
+		"test": "jest --runInBand",
+		"test:e2e": "jest --config test/jest-e2e.json --runInBand --forceExit",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
@@ -60,6 +62,10 @@
 			"json",
 			"ts"
 		],
+		"moduleNameMapper": {
+			"^@domain$": "<rootDir>/domain/index.ts",
+			"^@ports$": "<rootDir>/ports/index.ts"
+		},
 		"rootDir": "src",
 		"testRegex": ".*\\.spec\\.ts$",
 		"transform": {

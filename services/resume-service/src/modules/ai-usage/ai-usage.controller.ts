@@ -1,6 +1,20 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { LlmUsageService } from "./llm-usage.service";
 
+function parseLimit(value: string | undefined, fallback: number): number {
+	if (value === undefined || value === "") return fallback;
+	const n = Number.parseInt(value, 10);
+	if (Number.isNaN(n)) return fallback;
+	return Math.min(500, Math.max(1, n));
+}
+
+function parseOffset(value: string | undefined, fallback: number): number {
+	if (value === undefined || value === "") return fallback;
+	const n = Number.parseInt(value, 10);
+	if (Number.isNaN(n)) return fallback;
+	return Math.max(0, n);
+}
+
 @Controller("ai-usage")
 export class AiUsageController {
 	constructor(private readonly llmUsageService: LlmUsageService) {}
@@ -10,8 +24,8 @@ export class AiUsageController {
 		@Query("limit") limitParam?: string,
 		@Query("offset") offsetParam?: string,
 	): Promise<{ data: Awaited<ReturnType<LlmUsageService["findAll"]>> }> {
-		const limit = limitParam != null ? Math.min(500, Math.max(1, Number(limitParam))) : 100;
-		const offset = offsetParam != null ? Math.max(0, Number(offsetParam)) : 0;
+		const limit = parseLimit(limitParam, 100);
+		const offset = parseOffset(offsetParam, 0);
 		const data = await this.llmUsageService.findAll(limit, offset);
 		return { data };
 	}

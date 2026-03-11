@@ -1,15 +1,18 @@
 import type { DocumentDetail } from "@algo/cv-core";
 import { CreateDocumentPayload, UpdateDocumentPayload } from "@algo/cv-core";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { AiRewriteService } from "./ai-rewrite.service";
-import { convertPathFieldValuesToDocumentData } from "./convert-path-to-document-data";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { CreateDocumentUseCase } from "./use-cases/create-document.use-case";
+import { RewriteFieldUseCase } from "./use-cases/rewrite-field.use-case";
+import { UpdateDocumentUseCase } from "./use-cases/update-document.use-case";
 import { DocumentRepository } from "./document.repository";
 
 @Injectable()
 export class DocumentService {
 	constructor(
 		private readonly repository: DocumentRepository,
-		private readonly aiRewriteService: AiRewriteService,
+		private readonly createDocumentUseCase: CreateDocumentUseCase,
+		private readonly updateDocumentUseCase: UpdateDocumentUseCase,
+		private readonly rewriteFieldUseCase: RewriteFieldUseCase,
 	) {}
 
 	async findAll() {
@@ -25,22 +28,11 @@ export class DocumentService {
 	}
 
 	async create(payload: CreateDocumentPayload) {
-		const data =
-			payload.fieldValues && Object.keys(payload.fieldValues).length > 0
-				? await convertPathFieldValuesToDocumentData(payload.fieldValues)
-				: undefined;
-		return this.repository.create({
-			title: payload.title,
-			data: data ?? null,
-		});
+		return this.createDocumentUseCase.execute(payload);
 	}
 
 	async update(id: string, payload: UpdateDocumentPayload) {
-		const document = await this.repository.update(id, payload);
-		if (!document) {
-			throw new NotFoundException();
-		}
-		return document;
+		return this.updateDocumentUseCase.execute(id, payload);
 	}
 
 	async remove(id: string) {
@@ -62,19 +54,12 @@ export class DocumentService {
 			apply?: boolean;
 		},
 	): Promise<{ value: string } | DocumentDetail> {
-		const document = await this.findById(id);
-		const currentValue = document.data?.fieldValues?.[payload.fieldId];
-		if (currentValue === undefined || currentValue === "") {
-			throw new BadRequestException("Field has no content to rewrite");
-		}
-		const value = await this.aiRewriteService.rewrite(currentValue, payload.sectionKind, payload.fieldKey);
-		if (payload.apply === true) {
-			const updated = await this.repository.update(id, {
-				fields: { [payload.fieldId]: value },
-			});
-			if (!updated) throw new NotFoundException();
-			return updated;
-		}
-		return { value };
+		return this.rewriteFieldUseCase.execute({
+			documentId: id,
+			fieldId: payload.fieldId,
+			sectionKind: payload.sectionKind,
+			fieldKey: payload.fieldKey,
+			apply: payload.apply,
+		});
 	}
 }

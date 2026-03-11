@@ -22,13 +22,13 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import multer from "multer";
 import { DocumentService } from "./document.service";
 import { CreateDocumentPayloadDto, type ParsedResumeDto, RewriteFieldDto, UpdateDocumentPayloadDto } from "./dto";
-import { ParsePdfService } from "./parse-pdf.service";
+import { ParsePdfUseCase } from "./use-cases";
 
 @Controller("documents")
 export class DocumentController {
 	constructor(
 		private readonly documentService: DocumentService,
-		private readonly parsePdfService: ParsePdfService,
+		private readonly parsePdfUseCase: ParsePdfUseCase,
 	) {}
 
 	@Post("parse-pdf")
@@ -42,7 +42,7 @@ export class DocumentController {
 		if (!file?.buffer) {
 			throw new InternalServerErrorException("No file uploaded");
 		}
-		const data = await this.parsePdfService.parsePdf(file.buffer);
+		const data = await this.parsePdfUseCase.execute(file.buffer);
 		return { data };
 	}
 

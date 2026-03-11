@@ -1,3 +1,5 @@
+import type { LlmUsageLog } from "@algo/cv-core";
+
 const API_BASE = "/api";
 
 export async function fetchAiUsage(limit = 100, offset = 0): Promise<LlmUsageLog[]> {
@@ -8,18 +10,4 @@ export async function fetchAiUsage(limit = 100, offset = 0): Promise<LlmUsageLog
 	}
 	const json = (await res.json()) as { data: LlmUsageLog[] };
 	return json.data;
-}
-
-export interface LlmUsageLog {
-	id: string;
-	type: string;
-	model: string;
-	fieldKey: string | null;
-	systemPrompt: string;
-	userInput: string;
-	output: string;
-	inputTokens: number;
-	outputTokens: number;
-	durationMs: number;
-	createdAt: string;
 }

@@ -1,4 +1,5 @@
 import type { Field } from "@algo/cv-core";
+import { SECTION_KINDS_LIST } from "./section-kinds";
 
 /** Field definition without id (id is generated when creating an entity). Must match LLM path keys (e.g. content.personal.firstName). */
 export type FieldTemplate = Omit<Field, "id"> & { key: string };
@@ -61,6 +62,10 @@ export const ENTITY_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
 	skills: [{ type: "text", label: "Skill", placeholder: "", colSpan: 1, key: "skill" }],
 	languages: [{ type: "text", label: "Language", placeholder: "", colSpan: 1, key: "language" }],
 };
+
+export function getSectionKindsForDocument(): readonly string[] {
+	return SECTION_KINDS_LIST;
+}
 
 export async function createFieldsFromTemplate(templates: FieldTemplate[]): Promise<Field[]> {
 	const { nanoid } = await import("nanoid");

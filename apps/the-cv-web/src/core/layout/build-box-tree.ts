@@ -9,7 +9,13 @@ import type {
 	TextBoxNode,
 	TextRun,
 } from "./box-tree-types";
-import type { ExpandedImageNode, ExpandedLayoutNode, ExpandedRichTextNode, ExpandedTextNode } from "./expand-layout";
+import type {
+	ExpandedBoxNode,
+	ExpandedImageNode,
+	ExpandedLayoutNode,
+	ExpandedRichTextNode,
+	ExpandedTextNode,
+} from "./expand-layout";
 
 const defaultConstraints: BoxConstraints = {};
 
@@ -174,5 +180,20 @@ function buildBoxFromExpanded(
  */
 export function buildBoxTree(expanded: ExpandedLayoutNode | null, contentWidth: number): BoxNode | null {
 	if (!expanded) return null;
+	// #region agent log
+	const rootPadding = expanded.kind === "box" ? (expanded as ExpandedBoxNode).style?.padding : undefined;
+	fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
+		method: "POST",
+		headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "899923" },
+		body: JSON.stringify({
+			sessionId: "899923",
+			location: "build-box-tree.ts:buildBoxTree",
+			message: "root expanded style",
+			data: { rootPadding },
+			timestamp: Date.now(),
+			hypothesisId: "H4",
+		}),
+	}).catch(() => {});
+	// #endregion
 	return buildBoxFromExpanded(expanded, contentWidth, defaultConstraints);
 }
