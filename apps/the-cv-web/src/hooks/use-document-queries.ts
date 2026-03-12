@@ -17,12 +17,20 @@ export function useDocumentList() {
 		enabled: isOnline,
 	});
 
-	return useMemo(() => {
+	const documents = useMemo(() => {
 		if (!isOnline || !cloudResult.data) {
 			return mergeAndSortDocuments([], localDocuments ?? []);
 		}
 		return mergeCloudWithLocalPending(cloudResult.data, localDocuments ?? []);
 	}, [isOnline, cloudResult.data, localDocuments]);
+
+	return {
+		documents,
+		isListLoading: isOnline && cloudResult.isPending,
+		isListError: isOnline && cloudResult.isError,
+		listError: cloudResult.error,
+		refetchList: cloudResult.refetch,
+	};
 }
 
 export function useDocumentDetail(id: string) {

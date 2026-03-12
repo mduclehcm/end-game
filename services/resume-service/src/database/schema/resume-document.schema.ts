@@ -7,6 +7,8 @@ export type DocumentStructure = Omit<DocumentData, "fieldValues">;
 export const DocumentsTable = pgTable("resume_documents", {
 	id: varchar("id", { length: 10 }).primaryKey(),
 	title: varchar("title", { length: 50 }).notNull(),
+	/** Owner: auth user id (from JWT sub). */
+	userId: varchar("user_id", { length: 10 }).notNull(),
 	/** Section/entity/field structure only. Field values are in resume_field_values. */
 	data: jsonb("data").$type<DocumentStructure | null>(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),

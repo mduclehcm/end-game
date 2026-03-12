@@ -6,6 +6,7 @@ import { DocumentRepository } from "../document.repository";
 
 export interface RewriteFieldInput {
 	documentId: string;
+	userId: string;
 	fieldId: string;
 	sectionKind: string;
 	fieldKey: string;
@@ -20,7 +21,7 @@ export class RewriteFieldUseCase {
 	) {}
 
 	async execute(input: RewriteFieldInput): Promise<{ value: string } | DocumentDetail> {
-		const document = await this.documentRepository.findById(input.documentId);
+		const document = await this.documentRepository.findById(input.documentId, input.userId);
 		if (!document) {
 			throw new NotFoundException();
 		}
@@ -33,9 +34,11 @@ export class RewriteFieldUseCase {
 		}
 		const value = await this.aiRewriteService.rewrite(currentValue, input.sectionKind, input.fieldKey);
 		if (input.apply === true) {
-			const updated = await this.documentRepository.update(input.documentId, {
-				fields: { [input.fieldId]: value },
-			});
+			const updated = await this.documentRepository.update(
+				input.documentId,
+				input.userId,
+				{ fields: { [input.fieldId]: value } },
+			);
 			if (!updated) throw new NotFoundException();
 			return updated;
 		}

@@ -15,14 +15,25 @@ import {
 	Param,
 	Patch,
 	Post,
+	Req,
+	UnauthorizedException,
 	UploadedFile,
+	UseGuards,
 	UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
+import type { Request } from "express";
 import multer from "multer";
+import { type RequestUser, RequireUserGuard } from "../../guards/require-user.guard";
 import { DocumentService } from "./document.service";
 import { CreateDocumentPayloadDto, type ParsedResumeDto, RewriteFieldDto, UpdateDocumentPayloadDto } from "./dto";
 import { ParsePdfUseCase } from "./use-cases";
+
+function getUserId(req: Request): string {
+	const user = (req as Request & { user?: RequestUser }).user;
+	if (!user?.sub) throw new UnauthorizedException();
+	return user.sub;
+}
 
 @Controller("documents")
 export class DocumentController {
@@ -47,33 +58,38 @@ export class DocumentController {
 	}
 
 	@Get()
-	async findAll(): Promise<GetDocumentListResponse> {
-		const documents = await this.documentService.findAll();
+	@UseGuards(RequireUserGuard)
+	async findAll(@Req() req: Request): Promise<GetDocumentListResponse> {
+		const documents = await this.documentService.findAll(getUserId(req));
 		return {
 			data: documents,
 		};
 	}
 
 	@Post(":id/rewrite-field")
+	@UseGuards(RequireUserGuard)
 	async rewriteField(
 		@Param("id") id: string,
+		@Req() req: Request,
 		@Body() dto: RewriteFieldDto,
 	): Promise<{ data: { value: string } | DocumentDetail }> {
-		const result = await this.documentService.rewriteField(id, dto);
+		const result = await this.documentService.rewriteField(id, getUserId(req), dto);
 		return { data: result };
 	}
 
 	@Get(":id")
-	async findById(@Param("id") id: string): Promise<GetDocumentResponse> {
-		const document = await this.documentService.findById(id);
+	@UseGuards(RequireUserGuard)
+	async findById(@Param("id") id: string, @Req() req: Request): Promise<GetDocumentResponse> {
+		const document = await this.documentService.findById(id, getUserId(req));
 		return {
 			data: document,
 		};
 	}
 
 	@Post()
-	async create(@Body() dto: CreateDocumentPayloadDto): Promise<CreateDocumentResponse> {
-		const document = await this.documentService.create(dto);
+	@UseGuards(RequireUserGuard)
+	async create(@Body() dto: CreateDocumentPayloadDto, @Req() req: Request): Promise<CreateDocumentResponse> {
+		const document = await this.documentService.create(dto, getUserId(req));
 		if (!document) {
 			throw new InternalServerErrorException();
 		}
@@ -83,16 +99,22 @@ export class DocumentController {
 	}
 
 	@Patch(":id")
-	async update(@Param("id") id: string, @Body() dto: UpdateDocumentPayloadDto): Promise<UpdateDocumentResponse> {
-		const document = await this.documentService.update(id, dto);
+	@UseGuards(RequireUserGuard)
+	async update(
+		@Param("id") id: string,
+		@Req() req: Request,
+		@Body() dto: UpdateDocumentPayloadDto,
+	): Promise<UpdateDocumentResponse> {
+		const document = await this.documentService.update(id, getUserId(req), dto);
 		return {
 			data: document,
 		};
 	}
 
 	@Delete(":id")
-	async remove(@Param("id") id: string): Promise<DeleteDocumentResponse> {
-		const result = await this.documentService.remove(id);
+	@UseGuards(RequireUserGuard)
+	async remove(@Param("id") id: string, @Req() req: Request): Promise<DeleteDocumentResponse> {
+		const result = await this.documentService.remove(id, getUserId(req));
 		if (!result) {
 			throw new InternalServerErrorException();
 		}

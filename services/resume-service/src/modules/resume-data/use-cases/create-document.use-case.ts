@@ -7,7 +7,7 @@ import { DocumentRepository } from "../document.repository";
 export class CreateDocumentUseCase {
 	constructor(private readonly documentRepository: DocumentRepository) {}
 
-	async execute(payload: CreateDocumentPayload): Promise<DocumentDetail | null> {
+	async execute(payload: CreateDocumentPayload, userId: string): Promise<DocumentDetail | null> {
 		const data: DocumentData | null =
 			payload.fieldValues && Object.keys(payload.fieldValues).length > 0
 				? await convertPathFieldValuesToDocumentData(payload.fieldValues)
@@ -15,6 +15,7 @@ export class CreateDocumentUseCase {
 		return this.documentRepository.create({
 			title: payload.title,
 			data,
+			userId,
 		});
 	}
 }

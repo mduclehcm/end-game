@@ -6,8 +6,8 @@ import { DocumentRepository } from "../document.repository";
 export class UpdateDocumentUseCase {
 	constructor(private readonly documentRepository: DocumentRepository) {}
 
-	async execute(id: string, payload: UpdateDocumentPayload): Promise<DocumentDetail> {
-		const document = await this.documentRepository.update(id, payload);
+	async execute(id: string, userId: string, payload: UpdateDocumentPayload): Promise<DocumentDetail> {
+		const document = await this.documentRepository.update(id, userId, payload);
 		if (!document) {
 			throw new NotFoundException();
 		}

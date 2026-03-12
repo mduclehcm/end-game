@@ -11,12 +11,13 @@ import type {
 	RewriteFieldResult,
 	UpdateDocumentResponse,
 } from "@algo/cv-core";
+import { AUTH_REDIRECT_MAX, clearRedirectCount, incrementRedirectCount } from "@/lib/auth-redirect";
 import { useAuthStore } from "@/store/auth-store";
 
-const BASE_URL = "/api/v1";
+const BASE_URL = "/api/resume";
 
 async function authenticatedFetch(url: string, init?: RequestInit): Promise<Response> {
-	const { accessToken, refreshAuth } = useAuthStore.getState();
+	const { accessToken, refreshAuth, logout } = useAuthStore.getState();
 	const headers = new Headers(init?.headers);
 	if (!headers.has("Content-Type") && !(init?.body instanceof FormData)) {
 		headers.set("Content-Type", "application/json");
@@ -31,18 +32,36 @@ async function authenticatedFetch(url: string, init?: RequestInit): Promise<Resp
 		if (newToken) {
 			headers.set("Authorization", `Bearer ${newToken}`);
 			const retryRes = await fetch(url, { ...init, headers });
-			if (retryRes.ok) return retryRes;
+			if (retryRes.ok) {
+				clearRedirectCount();
+				return retryRes;
+			}
 			if (retryRes.status === 401) {
+				const count = incrementRedirectCount();
+				if (count >= AUTH_REDIRECT_MAX) {
+					await logout();
+					clearRedirectCount();
+					window.location.assign("/sign-in");
+					throw new Error("Unauthorized");
+				}
 				const redirect = encodeURIComponent(window.location.pathname + window.location.search);
 				window.location.assign(`/sign-in?redirect=${redirect}`);
 				throw new Error("Unauthorized");
 			}
 			throw new Error(`API ${retryRes.status}: ${retryRes.statusText}`);
 		}
+		const count = incrementRedirectCount();
+		if (count >= AUTH_REDIRECT_MAX) {
+			await logout();
+			clearRedirectCount();
+			window.location.assign("/sign-in");
+			throw new Error("Unauthorized");
+		}
 		const redirect = encodeURIComponent(window.location.pathname + window.location.search);
 		window.location.assign(`/sign-in?redirect=${redirect}`);
 		throw new Error("Unauthorized");
 	}
+	clearRedirectCount();
 	return res;
 }
 

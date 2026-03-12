@@ -15,28 +15,28 @@ export class DocumentService {
 		private readonly rewriteFieldUseCase: RewriteFieldUseCase,
 	) {}
 
-	async findAll() {
-		return this.repository.findAll();
+	async findAll(userId: string) {
+		return this.repository.findAll(userId);
 	}
 
-	async findById(id: string) {
-		const document = await this.repository.findById(id);
+	async findById(id: string, userId: string) {
+		const document = await this.repository.findById(id, userId);
 		if (!document) {
 			throw new NotFoundException();
 		}
 		return document;
 	}
 
-	async create(payload: CreateDocumentPayload) {
-		return this.createDocumentUseCase.execute(payload);
+	async create(payload: CreateDocumentPayload, userId: string) {
+		return this.createDocumentUseCase.execute(payload, userId);
 	}
 
-	async update(id: string, payload: UpdateDocumentPayload) {
-		return this.updateDocumentUseCase.execute(id, payload);
+	async update(id: string, userId: string, payload: UpdateDocumentPayload) {
+		return this.updateDocumentUseCase.execute(id, userId, payload);
 	}
 
-	async remove(id: string) {
-		const result = await this.repository.remove(id);
+	async remove(id: string, userId: string) {
+		const result = await this.repository.remove(id, userId);
 		if (!result) {
 			throw new NotFoundException();
 		}
@@ -45,6 +45,7 @@ export class DocumentService {
 
 	async rewriteField(
 		id: string,
+		userId: string,
 		payload: {
 			sectionId: string;
 			entityId: string;
@@ -56,6 +57,7 @@ export class DocumentService {
 	): Promise<{ value: string } | DocumentDetail> {
 		return this.rewriteFieldUseCase.execute({
 			documentId: id,
+			userId,
 			fieldId: payload.fieldId,
 			sectionKind: payload.sectionKind,
 			fieldKey: payload.fieldKey,

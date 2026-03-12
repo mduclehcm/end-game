@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import type { AuthUser } from "@/lib/auth-api";
 import { apiGetMe, apiLogin, apiLogout, apiRefreshToken, apiRegister, type RegisterPayload } from "@/lib/auth-api";
+import { clearRedirectCount } from "@/lib/auth-redirect";
 import { Logger } from "@/lib/logger";
 
 const AUTH_STORAGE_KEYS = {
@@ -111,6 +112,7 @@ export const useAuthStore = create<AuthState>()(
 			});
 			scheduleRefresh(get, set);
 			logger.info("logged in", res.user.email);
+			clearRedirectCount();
 		},
 
 		register: async (payload: RegisterPayload) => {
@@ -126,6 +128,7 @@ export const useAuthStore = create<AuthState>()(
 			});
 			scheduleRefresh(get, set);
 			logger.info("registered", res.user.email);
+			clearRedirectCount();
 		},
 
 		logout: async () => {
