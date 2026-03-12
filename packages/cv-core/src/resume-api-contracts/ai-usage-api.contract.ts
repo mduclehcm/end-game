@@ -1,6 +1,7 @@
 /**
  * API contract schemas for ai-usage endpoints.
  * Used for validation and e2e contract baselines.
+ * Shared between backend (resume-service) and frontend (the-cv-web).
  */
 
 import { z } from "zod";

@@ -1,7 +1,3 @@
-import type { INestApplication } from "@nestjs/common";
-import { Test, type TestingModule } from "@nestjs/testing";
-import request from "supertest";
-import type { App } from "supertest/types";
 import {
 	CreateDocumentResponseSchema,
 	DeleteDocumentResponseSchema,
@@ -9,7 +5,11 @@ import {
 	GetDocumentListResponseSchema,
 	GetDocumentResponseSchema,
 	UpdateDocumentResponseSchema,
-} from "../src/api-contracts";
+} from "@algo/cv-core";
+import type { INestApplication } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import request from "supertest";
+import type { App } from "supertest/types";
 import { X_USER_ID_HEADER } from "../src/guards/require-user.guard";
 import { ResumeModule } from "../src/resume.module";
 

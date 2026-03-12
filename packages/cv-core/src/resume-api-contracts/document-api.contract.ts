@@ -1,10 +1,12 @@
 /**
  * API contract schemas for document endpoints.
  * Used for validation and e2e contract baselines.
+ * Shared between backend (resume-service) and frontend (the-cv-web).
  */
 
-import { DocumentDetailSchema, DocumentInfoSchema } from "@algo/cv-core";
 import { z } from "zod";
+import { DocumentDetailSchema } from "../schema/document-detail.schema";
+import { DocumentInfoSchema } from "../schema/document-info.schema";
 
 /** POST /documents/parse-pdf response */
 export const ParsePdfResponseSchema = z.object({
@@ -50,8 +52,3 @@ export const RewriteFieldApplyResponseSchema = z.object({
 });
 
 export type ParsePdfResponse = z.infer<typeof ParsePdfResponseSchema>;
-export type GetDocumentListResponse = z.infer<typeof GetDocumentListResponseSchema>;
-export type GetDocumentResponse = z.infer<typeof GetDocumentResponseSchema>;
-export type CreateDocumentResponse = z.infer<typeof CreateDocumentResponseSchema>;
-export type UpdateDocumentResponse = z.infer<typeof UpdateDocumentResponseSchema>;
-export type DeleteDocumentResponse = z.infer<typeof DeleteDocumentResponseSchema>;
