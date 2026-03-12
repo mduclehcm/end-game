@@ -43,7 +43,7 @@ export class ZaloStrategy extends PassportStrategy(Strategy, "zalo") {
 		const state = req.query?.state as string | undefined;
 		const appId = process.env.ZALO_APP_ID;
 		const appSecret = process.env.ZALO_APP_SECRET;
-		const callbackURL = process.env.ZALO_CALLBACK_URL ?? "http://localhost:3001/auth/zalo/callback";
+		const callbackURL = process.env.ZALO_CALLBACK_URL ?? "http://localhost:3001/api/auth/zalo/callback";
 
 		if (!appId || !appSecret) {
 			this.passportStrategy.fail({ message: "Zalo OAuth not configured" }, 500);

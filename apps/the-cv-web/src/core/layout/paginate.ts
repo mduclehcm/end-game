@@ -412,22 +412,6 @@ function paginateNode(state: PaginationState, node: BoxNode, x: number): void {
 
 	const padding = getPadding(container.style);
 	const childX = x + padding.left;
-	// #region agent log
-	if (state.containerStack.length === 0) {
-		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "899923" },
-			body: JSON.stringify({
-				sessionId: "899923",
-				location: "paginate.ts:paginateNode",
-				message: "root container padding",
-				data: { padding, childX, x },
-				timestamp: Date.now(),
-				hypothesisId: "H4",
-			}),
-		}).catch(() => {});
-	}
-	// #endregion
 	const containerMargin = getMargin(container.style);
 	// Reserve space for container margin-top so first child does not overlap previous sibling
 	if (containerMargin.top > 0) {

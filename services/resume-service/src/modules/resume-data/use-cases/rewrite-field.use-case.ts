@@ -1,8 +1,8 @@
 import type { DocumentDetail } from "@algo/cv-core";
 import { isRewriteSupported } from "@algo/cv-core";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import type { AiRewriteService } from "../ai-rewrite.service";
-import type { DocumentRepository } from "../document.repository";
+import { AiRewriteService } from "../ai-rewrite.service";
+import { DocumentRepository } from "../document.repository";
 
 export interface RewriteFieldInput {
 	documentId: string;

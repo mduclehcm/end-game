@@ -58,5 +58,29 @@ services:
       postgres:
         condition: service_healthy
 
+  kong:
+    build:
+      context: ./kong
+      dockerfile: Dockerfile.kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: "/tmp/kong.yml"
+      KONG_PROXY_ACCESS_LOG: "/dev/stdout"
+      KONG_ADMIN_ACCESS_LOG: "/dev/stdout"
+      KONG_PROXY_ERROR_LOG: "/dev/stderr"
+      KONG_ADMIN_ERROR_LOG: "/dev/stderr"
+      KONG_PLUGINS: "bundled"
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"   # proxy
+      - "8001:8001"   # admin API (optional)
+    volumes:
+      - ./kong:/kong:ro
+    command:
+      - sh
+      - -c
+      - "export JWT_SECRET=$${JWT_SECRET:-dev-secret-change-me} && envsubst '$$JWT_SECRET' < /kong/kong.yml.template > /tmp/kong.yml && exec /docker-entrypoint.sh kong start"
+
 volumes:
   postgres_data:

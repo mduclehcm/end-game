@@ -11,14 +11,43 @@ import type {
 	RewriteFieldResult,
 	UpdateDocumentResponse,
 } from "@algo/cv-core";
+import { useAuthStore } from "@/store/auth-store";
 
 const BASE_URL = "/api/v1";
 
+async function authenticatedFetch(url: string, init?: RequestInit): Promise<Response> {
+	const { accessToken, refreshAuth } = useAuthStore.getState();
+	const headers = new Headers(init?.headers);
+	if (!headers.has("Content-Type") && !(init?.body instanceof FormData)) {
+		headers.set("Content-Type", "application/json");
+	}
+	if (accessToken) {
+		headers.set("Authorization", `Bearer ${accessToken}`);
+	}
+	const res = await fetch(url, { ...init, headers });
+	if (res.status === 401) {
+		await refreshAuth();
+		const { accessToken: newToken } = useAuthStore.getState();
+		if (newToken) {
+			headers.set("Authorization", `Bearer ${newToken}`);
+			const retryRes = await fetch(url, { ...init, headers });
+			if (retryRes.ok) return retryRes;
+			if (retryRes.status === 401) {
+				const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+				window.location.assign(`/sign-in?redirect=${redirect}`);
+				throw new Error("Unauthorized");
+			}
+			throw new Error(`API ${retryRes.status}: ${retryRes.statusText}`);
+		}
+		const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+		window.location.assign(`/sign-in?redirect=${redirect}`);
+		throw new Error("Unauthorized");
+	}
+	return res;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-	const res = await fetch(`${BASE_URL}${path}`, {
-		headers: { "Content-Type": "application/json", ...init?.headers },
-		...init,
-	});
+	const res = await authenticatedFetch(`${BASE_URL}${path}`, init);
 	if (!res.ok) {
 		throw new Error(`API ${res.status}: ${res.statusText}`);
 	}
@@ -28,7 +57,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function parsePdfResume(file: File): Promise<ParsedResumeDto> {
 	const formData = new FormData();
 	formData.append("file", file);
-	const res = await fetch(`${BASE_URL}/documents/parse-pdf`, {
+	const res = await authenticatedFetch(`${BASE_URL}/documents/parse-pdf`, {
 		method: "POST",
 		body: formData,
 	});
@@ -79,13 +108,13 @@ export function deleteCloudResumeDocument(id: string): Promise<boolean> {
 }
 
 export async function rewriteCloudField(id: string, payload: RewriteFieldPayload): Promise<RewriteFieldResult> {
-	const body = { ...payload };
-	const path = `${BASE_URL}/documents/${id}/rewrite-field`;
-	const res = await fetch(path, {
+	const res = await authenticatedFetch(`${BASE_URL}/documents/${id}/rewrite-field`, {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
+		body: JSON.stringify(payload),
 	});
+	if (!res.ok) {
+		throw new Error(`API ${res.status}: ${res.statusText}`);
+	}
 	const json = (await res.json()) as { data: RewriteFieldResult };
 	return json.data;
 }

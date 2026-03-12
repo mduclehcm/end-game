@@ -6,6 +6,9 @@ RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 FROM base-build AS builder
 ARG SERVICE_NAME
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy only manifest files, then install (no source yet)

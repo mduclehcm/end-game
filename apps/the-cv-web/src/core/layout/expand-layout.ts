@@ -178,21 +178,7 @@ function resolveStyleProps(
 	}
 	if (style.padding !== undefined) {
 		const v = resolveValue(style.padding as Value<SpaceValue>, document, tokens, scope);
-		// #region agent log
 		const resolvedBox = resolveSpaceValue(v as SpaceValue);
-		fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "899923" },
-			body: JSON.stringify({
-				sessionId: "899923",
-				location: "expand-layout.ts:resolveStyleProps",
-				message: "padding resolve",
-				data: { raw: v, resolvedBox, isUndefined: v === undefined },
-				timestamp: Date.now(),
-				hypothesisId: "H1-H3",
-			}),
-		}).catch(() => {});
-		// #endregion
 		out.padding = resolvedBox;
 	}
 	if (style.margin !== undefined) {
@@ -290,20 +276,6 @@ function expandNode(
 			const b = node as LayoutBoxNode;
 			const children = b.children.flatMap((c) => expandNode(c, document, template, scope));
 			const style = resolveStyle(b.style) ?? {};
-			// #region agent log
-			fetch("http://127.0.0.1:7529/ingest/2ec749b6-90f1-4a23-a455-c982abf44934", {
-				method: "POST",
-				headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "899923" },
-				body: JSON.stringify({
-					sessionId: "899923",
-					location: "expand-layout.ts:expandNode box",
-					message: "box style",
-					data: { stylePadding: style.padding },
-					timestamp: Date.now(),
-					hypothesisId: "H2",
-				}),
-			}).catch(() => {});
-			// #endregion
 			return [
 				{
 					id: nextExpandedId(),

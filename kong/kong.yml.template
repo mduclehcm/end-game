@@ -1,0 +1,71 @@
+# Kong Gateway declarative config (db-less)
+# JWT secret is substituted at startup: set JWT_SECRET in env (same as auth-service).
+_format_version: "3.0"
+
+# Consumer for JWT validation. Token must include claim: iss = "algovn"
+consumers:
+  - username: algovn-consumer
+    jwt_secrets:
+      - key: algovn
+        algorithm: HS256
+        secret: "${JWT_SECRET}"
+
+services:
+  - name: auth-service
+    url: http://auth-service:3001
+    routes:
+      - name: auth-public
+        paths:
+          - /api/auth/register
+          - /api/auth/login
+          - /api/auth/refresh
+          - /api/auth/logout
+          - /api/auth/google
+          - /api/auth/google/callback
+          - /api/auth/zalo
+          - /api/auth/zalo/callback
+        strip_path: false
+      - name: auth-protected
+        paths:
+          - /api/auth/me
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          hour: 5000
+          policy: local
+          fault_tolerant: true
+
+  - name: resume-service
+    url: http://resume-service:3000
+    routes:
+      - name: resume-health
+        paths:
+          - /api/v1/health
+        strip_path: false
+      - name: resume-api
+        paths:
+          - /api/v1/documents
+          - /api/v1/ai-usage
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 60
+          hour: 2000
+          policy: local
+          fault_tolerant: true
+
+# JWT plugin on protected routes only (decode/validate Bearer token)
+plugins:
+  - name: jwt
+    route: auth-protected
+    config:
+      claims_to_verify:
+        - exp
+  - name: jwt
+    route: resume-api
+    config:
+      claims_to_verify:
+        - exp

@@ -1,6 +1,6 @@
 import type { DocumentDetail, UpdateDocumentPayload } from "@algo/cv-core";
 import { Injectable, NotFoundException } from "@nestjs/common";
-import type { DocumentRepository } from "../document.repository";
+import { DocumentRepository } from "../document.repository";
 
 @Injectable()
 export class UpdateDocumentUseCase {

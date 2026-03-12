@@ -22,10 +22,13 @@ export class TokenService {
 	) {}
 
 	signAccessToken(payload: AccessTokenPayload): string {
-		return this.jwtService.sign(payload, {
-			secret: this.config.getOrThrow<string>("JWT_SECRET"),
-			expiresIn: 900,
-		});
+		return this.jwtService.sign(
+			{ ...payload, iss: "algovn" },
+			{
+				secret: this.config.getOrThrow<string>("JWT_SECRET"),
+				expiresIn: 900,
+			},
+		);
 	}
 
 	verifyAccessToken(token: string): AccessTokenPayload | null {
