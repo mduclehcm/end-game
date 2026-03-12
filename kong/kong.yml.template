@@ -59,56 +59,35 @@ services:
           policy: local
           fault_tolerant: true
 
-# JWT plugin on protected routes only (decode/validate Bearer token)
-# Pre-function runs after JWT and sets X-User-Id (and optional claim headers) from decoded payload
+# JWT plugin on protected routes only (decode/validate Bearer token).
+# Post-function is global: runs on every request, sets X-User-Id / X-Jwt-Claim-Email when
+# kong.ctx.shared.authenticated_jwt_token is set by JWT plugin (no-op on public routes).
 plugins:
+  - name: post-function
+    config:
+      access:
+        - |-
+          local token = kong.ctx.shared.authenticated_jwt_token
+          if not token or type(token) ~= "string" or #token == 0 then return end
+          local parts = {}
+          for p in (token .. "."):gmatch("(.-)%.") do parts[#parts + 1] = p end
+          if #parts < 2 then return end
+          local b64 = parts[2]:gsub("-", "+"):gsub("_", "/")
+          local pad = #b64 % 4
+          if pad > 0 then b64 = b64 .. string.rep("=", 4 - pad) end
+          local ok, decoded = pcall(ngx.decode_base64, b64)
+          if not ok or not decoded then return end
+          local sub = decoded:match('"sub"%s*:%s*"([^"]*)"')
+          local email = decoded:match('"email"%s*:%s*"([^"]*)"')
+          if sub and #sub > 0 then kong.service.request.set_header("X-User-Id", sub) end
+          if email and #email > 0 then kong.service.request.set_header("X-Jwt-Claim-Email", email) end
   - name: jwt
     route: auth-protected
     config:
       claims_to_verify:
         - exp
-  - name: pre-function
-    route: auth-protected
-    config:
-      access:
-        - |-
-          local token = kong.ctx.shared.authenticated_jwt_token
-          if token and type(token) == "string" then
-            local ok, jwt = pcall(require, "kong.plugins.jwt.jwt_parser")
-            if ok and jwt then
-              local decoded, err = jwt:new(token)
-              if decoded and decoded.claims then
-                if decoded.claims.sub then
-                  kong.service.request.set_header("X-User-Id", decoded.claims.sub)
-                end
-                if decoded.claims.email then
-                  kong.service.request.set_header("X-Jwt-Claim-Email", decoded.claims.email)
-                end
-              end
-            end
-          end
   - name: jwt
     route: resume-api
     config:
       claims_to_verify:
         - exp
-  - name: pre-function
-    route: resume-api
-    config:
-      access:
-        - |-
-          local token = kong.ctx.shared.authenticated_jwt_token
-          if token and type(token) == "string" then
-            local ok, jwt = pcall(require, "kong.plugins.jwt.jwt_parser")
-            if ok and jwt then
-              local decoded, err = jwt:new(token)
-              if decoded and decoded.claims then
-                if decoded.claims.sub then
-                  kong.service.request.set_header("X-User-Id", decoded.claims.sub)
-                end
-                if decoded.claims.email then
-                  kong.service.request.set_header("X-Jwt-Claim-Email", decoded.claims.email)
-                end
-              end
-            end
-          end
