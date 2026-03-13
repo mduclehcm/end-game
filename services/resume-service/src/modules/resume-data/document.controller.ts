@@ -35,7 +35,7 @@ function getUserId(req: Request): string {
 	return user.sub;
 }
 
-@Controller("documents")
+@Controller("resume/documents")
 export class DocumentController {
 	constructor(
 		private readonly documentService: DocumentService,

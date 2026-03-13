@@ -6,4 +6,5 @@
 
 export * from "./ai-usage-api.contract";
 export * from "./document-api.contract";
+export * from "./system-prompt-api.contract";
 export { API_VERSION } from "./version";

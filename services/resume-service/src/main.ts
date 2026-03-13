@@ -14,7 +14,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 async function bootstrap() {
 	const app = await NestFactory.create(ResumeModule);
-	app.setGlobalPrefix("api/resume");
+	app.setGlobalPrefix("api");
 	app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 	await app.listen(process.env.PORT ?? 3000);
 

@@ -1,0 +1,22 @@
+---
+description: Use shadcn UI components when building UI; add via CLI if not present
+globs: apps/**/*.tsx
+alwaysApply: false
+---
+
+# shadcn UI Components
+
+When building UI in apps (e.g. the-cv-admin-portal, the-cv-web):
+
+1. **Prefer shadcn UI components** — Use existing components from `@/components/ui` (Button, Dialog, Input, Table, etc.) instead of building custom equivalents or raw HTML.
+
+2. **Add missing components via CLI** — If a shadcn component you need does not exist in the app, add it with the CLI from that app’s root (where `components.json` lives):
+
+   ```bash
+   cd apps/the-cv-admin-portal   # or apps/the-cv-web
+   pnpm exec shadcn add <component-name>
+   ```
+
+   Examples: `pnpm exec shadcn add card`, `pnpm exec shadcn add select`, `pnpm exec shadcn add dropdown-menu`.
+
+3. **Import from aliases** — Use the project’s path alias, e.g. `import { Button } from "@/components/ui/button"`, not relative paths to `components/ui`.

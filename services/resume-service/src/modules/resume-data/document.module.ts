@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { LLM_CLIENT } from "@ports";
 import { RequireUserGuard } from "../../guards/require-user.guard";
 import { AiUsageModule } from "../ai-usage/ai-usage.module";
+import { SystemPromptModule } from "../system-prompt/system-prompt.module";
 import { AiRewriteService } from "./ai-rewrite.service";
 import { DocumentController } from "./document.controller";
 import { DocumentRepository } from "./document.repository";
@@ -11,7 +12,7 @@ import { ParsePdfService } from "./parse-pdf.service";
 import { CreateDocumentUseCase, ParsePdfUseCase, RewriteFieldUseCase, UpdateDocumentUseCase } from "./use-cases";
 
 @Module({
-	imports: [AiUsageModule],
+	imports: [AiUsageModule, SystemPromptModule],
 	controllers: [DocumentController],
 	providers: [
 		DocumentService,

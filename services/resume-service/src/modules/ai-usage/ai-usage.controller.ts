@@ -15,7 +15,7 @@ function parseOffset(value: string | undefined, fallback: number): number {
 	return Math.max(0, n);
 }
 
-@Controller("ai-usage")
+@Controller("admin/ai-usage")
 export class AiUsageController {
 	constructor(private readonly llmUsageService: LlmUsageService) {}
 
@@ -23,10 +23,11 @@ export class AiUsageController {
 	async findAll(
 		@Query("limit") limitParam?: string,
 		@Query("offset") offsetParam?: string,
+		@Query("promptId") promptId?: string,
 	): Promise<{ data: Awaited<ReturnType<LlmUsageService["findAll"]>> }> {
 		const limit = parseLimit(limitParam, 100);
 		const offset = parseOffset(offsetParam, 0);
-		const data = await this.llmUsageService.findAll(limit, offset);
+		const data = await this.llmUsageService.findAll(limit, offset, promptId ?? undefined);
 		return { data };
 	}
 }

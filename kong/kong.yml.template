@@ -45,11 +45,16 @@ services:
         paths:
           - /api/resume/health
         strip_path: false
-      # API: prefix /api/resume matches /api/resume/documents, /api/resume/ai-usage, etc.
+      # Resume API: documents (main app)
       - name: resume-api
         paths:
           - /api/resume/documents
-          - /api/resume/ai-usage
+        strip_path: false
+      # Admin API: ai-usage, system-prompts (admin portal)
+      - name: resume-admin-api
+        paths:
+          - /api/admin/ai-usage
+          - /api/admin/system-prompts
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -88,6 +93,11 @@ plugins:
         - exp
   - name: jwt
     route: resume-api
+    config:
+      claims_to_verify:
+        - exp
+  - name: jwt
+    route: resume-admin-api
     config:
       claims_to_verify:
         - exp

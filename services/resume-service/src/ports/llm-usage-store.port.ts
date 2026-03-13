@@ -14,6 +14,8 @@ export interface LlmUsageLogPayload {
 	inputTokens: number;
 	outputTokens: number;
 	durationMs: number;
+	promptId?: string | null;
+	promptUseCaseKey?: string | null;
 }
 
 /**
@@ -21,6 +23,6 @@ export interface LlmUsageLogPayload {
  * Implemented by LlmUsageRepository (Drizzle/Postgres).
  */
 export interface LlmUsageStore {
-	findAll(limit: number, offset: number): Promise<LlmUsageLog[]>;
+	findAll(limit: number, offset: number, promptId?: string | null): Promise<LlmUsageLog[]>;
 	log(payload: LlmUsageLogPayload): Promise<void>;
 }

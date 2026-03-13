@@ -17,6 +17,8 @@ const LlmUsageLogEntrySchema = z.object({
 	inputTokens: z.number(),
 	outputTokens: z.number(),
 	durationMs: z.number(),
+	promptId: z.string().nullable(),
+	promptUseCaseKey: z.string().nullable(),
 	createdAt: z.string(),
 });
 

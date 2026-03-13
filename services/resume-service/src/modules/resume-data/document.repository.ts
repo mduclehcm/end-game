@@ -12,6 +12,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { DRIZZLE } from "../../database/database.provider";
 import * as schema from "../../database/schema";
 import { DocumentsTable, FieldValuesTable } from "../../database/schema";
+import { shortId } from "../../database/short-id";
 import { toDocumentDetail, toDocumentInfoList } from "./dto/utils";
 
 @Injectable()
@@ -19,10 +20,7 @@ export class DocumentRepository implements DocumentStore {
 	constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof schema>) {}
 
 	async findAll(userId: string): Promise<DocumentInfo[]> {
-		const results = await this.db
-			.select()
-			.from(DocumentsTable)
-			.where(eq(DocumentsTable.userId, userId));
+		const results = await this.db.select().from(DocumentsTable).where(eq(DocumentsTable.userId, userId));
 		return toDocumentInfoList(results);
 	}
 
@@ -44,11 +42,10 @@ export class DocumentRepository implements DocumentStore {
 	async create(
 		payload: CreateDocumentPayload & { data?: DocumentData | null; userId: string },
 	): Promise<DocumentDetail | null> {
-		const { nanoid } = await import("nanoid");
 		const data = payload.data ?? null;
 		const structure = data ? { sectionIds: data.sectionIds, sections: data.sections } : null;
 		const fieldValuesMap = data?.fieldValues ?? {};
-		const docId = nanoid(10);
+		const docId = shortId(10);
 		const [inserted] = await this.db
 			.insert(DocumentsTable)
 			.values({

@@ -11,6 +11,8 @@ export const LlmUsageLogsTable = pgTable("llm_usage_logs", {
 	inputTokens: integer("input_tokens").notNull(),
 	outputTokens: integer("output_tokens").notNull(),
 	durationMs: integer("duration_ms").notNull(),
+	promptId: varchar("prompt_id", { length: 10 }),
+	promptUseCaseKey: varchar("prompt_use_case_key", { length: 80 }),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

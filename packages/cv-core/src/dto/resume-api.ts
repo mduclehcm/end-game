@@ -32,6 +32,33 @@ export interface RewriteFieldPayload {
 export type RewriteFieldResult = { value: string } | DocumentDetail;
 
 /**
+ * System prompt entity (GET /system-prompts, PATCH /system-prompts/:id/activate response).
+ * Final prompt = role + guide. Output structure is injected by backend per use case (e.g. parse-resume field list).
+ */
+export interface SystemPromptDto {
+	id: string;
+	useCaseKey: string;
+	name: string;
+	/** Prompt text = role + guide (concatenated with "\n\n"). */
+	promptText: string;
+	/** Editable parts: role, guide. */
+	promptParts: { role: string; guide: string };
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/**
+ * Request body for POST /system-prompts.
+ */
+export interface CreateSystemPromptPayload {
+	useCaseKey: string;
+	name: string;
+	/** Parts to concatenate into the prompt (role, guide). */
+	promptParts?: { role?: string; guide?: string };
+}
+
+/**
  * One entry from GET /ai-usage response (data array item).
  * Shared between backend and frontend (admin portal).
  */
@@ -46,5 +73,9 @@ export interface LlmUsageLog {
 	inputTokens: number;
 	outputTokens: number;
 	durationMs: number;
+	/** Id of the system prompt used, if any. */
+	promptId: string | null;
+	/** Use-case key of the prompt (e.g. parse-resume, rewrite.summary.text). */
+	promptUseCaseKey: string | null;
 	createdAt: string;
 }
