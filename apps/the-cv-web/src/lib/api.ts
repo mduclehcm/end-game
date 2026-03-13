@@ -1,10 +1,14 @@
 import type {
 	CreateDocumentPayload,
 	CreateDocumentResponse,
+	CreateDownloadLinkResponse,
+	CreateExportResponse,
 	DeleteDocumentResponse,
 	DocumentDetail,
 	DocumentInfo,
+	ExportInfo,
 	GetDocumentListResponse,
+	GetExportListResponse,
 	GetDocumentResponse,
 	ParsedResumeDto,
 	RewriteFieldPayload,
@@ -136,4 +140,23 @@ export async function rewriteCloudField(id: string, payload: RewriteFieldPayload
 	}
 	const json = (await res.json()) as { data: RewriteFieldResult };
 	return json.data;
+}
+
+// --- Export (PDF) API ---
+
+export function createExport(documentId: string): Promise<CreateExportResponse["data"]> {
+	return request<CreateExportResponse>("/exports", {
+		method: "POST",
+		body: JSON.stringify({ documentId }),
+	}).then((res) => res.data);
+}
+
+export function fetchExportList(): Promise<ExportInfo[]> {
+	return request<GetExportListResponse>("/exports").then((res) => res.data);
+}
+
+export function createExportDownloadLink(exportId: string): Promise<CreateDownloadLinkResponse["data"]> {
+	return request<CreateDownloadLinkResponse>(`/exports/${exportId}/download-link`, {
+		method: "POST",
+	}).then((res) => res.data);
 }

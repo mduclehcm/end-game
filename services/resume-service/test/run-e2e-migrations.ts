@@ -16,6 +16,7 @@ export async function runE2eMigrations(): Promise<void> {
 		await pool.query(readFileSync(join(drizzleDir, "0005_llm_usage_prompt_id.sql"), "utf8"));
 		await pool.query(readFileSync(join(drizzleDir, "0006_system_prompt_parts.sql"), "utf8"));
 		await pool.query(readFileSync(join(drizzleDir, "0007_drop_system_prompt_output.sql"), "utf8"));
+		await pool.query(readFileSync(join(drizzleDir, "0008_resume_exports.sql"), "utf8"));
 	} finally {
 		await pool.end();
 	}

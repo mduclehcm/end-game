@@ -1,11 +1,13 @@
 import {
 	ActivateSystemPromptResponseSchema,
 	CreateDocumentResponseSchema,
+	CreateExportResponseSchema,
 	CreateSystemPromptResponseSchema,
 	DeleteDocumentResponseSchema,
 	GetAiUsageResponseSchema,
 	GetDocumentListResponseSchema,
 	GetDocumentResponseSchema,
+	GetExportListResponseSchema,
 	GetSystemPromptsResponseSchema,
 	UpdateDocumentResponseSchema,
 } from "@algo/cv-core";
@@ -239,6 +241,69 @@ describe("Resume API (e2e) – contract baselines", () => {
 
 		it("returns 401 without X-User-Id header", async () => {
 			await request(app.getHttpServer()).get(`${API}/documents`).expect(401);
+		});
+	});
+
+	describe("Export API – contract and auth", () => {
+		let documentId: string;
+		let exportId: string;
+
+		beforeAll(async () => {
+			const createRes = await docRequest().post(`${API}/documents`).send({ title: "E2E Export Test", fieldValues: {} });
+			if (createRes.body?.data?.id) documentId = createRes.body.data.id;
+		});
+
+		it("GET /exports returns list matching contract", async () => {
+			const res = await docRequest().get(`${API}/exports`).expect(200);
+			const parsed = GetExportListResponseSchema.safeParse(res.body);
+			expect(parsed.success).toBe(true);
+			if (parsed.success) expect(Array.isArray(parsed.data.data)).toBe(true);
+		});
+
+		it("POST /exports returns 202 and CreateExportResponse contract", async () => {
+			if (!documentId) return;
+			const res = await docRequest().post(`${API}/exports`).send({ documentId }).expect(202);
+			const parsed = CreateExportResponseSchema.safeParse(res.body);
+			expect(parsed.success).toBe(true);
+			if (parsed.success) {
+				exportId = parsed.data.data.id;
+				expect(parsed.data.data.status).toBe("pending");
+			}
+		});
+
+		it("GET /exports list includes created export", async () => {
+			if (!exportId) return;
+			const res = await docRequest().get(`${API}/exports`).expect(200);
+			const parsed = GetExportListResponseSchema.safeParse(res.body);
+			expect(parsed.success).toBe(true);
+			if (parsed.success) {
+				const found = parsed.data.data.find((e) => e.id === exportId);
+				expect(found).toBeDefined();
+				expect(found?.status).toBe("pending");
+			}
+		});
+
+		it("POST /exports/:id/download-link returns 400 when export not ready", async () => {
+			if (!exportId) return;
+			await docRequest().post(`${API}/exports/${exportId}/download-link`).expect(400);
+		});
+
+		it("GET /exports/:id/download returns 401 without token", async () => {
+			if (!exportId) return;
+			await request(app.getHttpServer()).get(`${API}/exports/${exportId}/download`).expect(401);
+		});
+
+		it("GET /exports/:id/download returns 400 with invalid token", async () => {
+			if (!exportId) return;
+			await request(app.getHttpServer())
+				.get(`${API}/exports/${exportId}/download`)
+				.query({ token: "invalid-token" })
+				.expect(400);
+		});
+
+		it("returns 401 without X-User-Id for exports", async () => {
+			await request(app.getHttpServer()).get(`${API}/exports`).expect(401);
+			await request(app.getHttpServer()).post(`${API}/exports`).send({ documentId: "x" }).expect(401);
 		});
 	});
 });

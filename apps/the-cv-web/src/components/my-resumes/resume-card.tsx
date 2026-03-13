@@ -1,7 +1,10 @@
 import type { DocumentInfo } from "@algo/cv-core";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import type React from "react";
+import { FileDown, MoreHorizontal, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { createExport } from "@/lib/api";
 import { RelativeTime } from "@/components/relative-time";
 import {
 	AlertDialog,
@@ -30,11 +33,33 @@ type ResumeCardProps = {
 export function ResumeCard({ resume }: ResumeCardProps) {
 	const navigate = useNavigate();
 	const [confirmDelete, setConfirmDelete] = useState(false);
+	const [exporting, setExporting] = useState(false);
 	const { deleteDocument, loading } = useDeleteDocument();
 
 	const onSelect = useCallback(() => {
 		navigate(`/doc/${resume.id}`, { state: { internal: true } });
 	}, [navigate, resume.id]);
+
+	const onExportPdf = useCallback(async (e: React.MouseEvent) => {
+		e.stopPropagation();
+		setExporting(true);
+		try {
+			await createExport(resume.id);
+			toast.success("Export started", {
+				description: "Go to My exports to download your PDF when it's ready.",
+				action: {
+					label: "Open exports",
+					onClick: () => navigate("/my-resumes/exports"),
+				},
+			});
+		} catch (err) {
+			toast.error("Export failed", {
+				description: err instanceof Error ? err.message : "Could not start export",
+			});
+		} finally {
+			setExporting(false);
+		}
+	}, [resume.id, navigate]);
 
 	const onDeleteClick = useCallback(() => {
 		setConfirmDelete(true);
@@ -77,6 +102,13 @@ export function ResumeCard({ resume }: ResumeCardProps) {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
+								<DropdownMenuItem
+									onClick={onExportPdf}
+									disabled={exporting}
+								>
+									<FileDown className="size-3.5 mr-2" />
+									{exporting ? "Exporting…" : "Export PDF"}
+								</DropdownMenuItem>
 								<DropdownMenuItem
 									className="text-destructive focus:text-destructive"
 									onClick={(e) => {

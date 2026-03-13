@@ -1,22 +1,17 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: hot reload */
 
-import path from "node:path";
 import { ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
-import { config } from "dotenv";
 import { ResumeModule } from "./resume.module";
-
-// Load .env: first from cwd, then from monorepo root (when running from services/resume-service)
-config();
-if (!process.env.OPENAI_API_KEY) {
-	config({ path: path.resolve(process.cwd(), "../../.env") });
-}
 
 async function bootstrap() {
 	const app = await NestFactory.create(ResumeModule);
+	const configService = app.get(ConfigService);
 	app.setGlobalPrefix("api");
 	app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-	await app.listen(process.env.PORT ?? 3000);
+	const port = Number(configService.get<string>("PORT") ?? 3000);
+	await app.listen(Number.isFinite(port) ? port : 3000);
 
 	if ((module as any).hot) {
 		(module as any).hot.accept();

@@ -50,6 +50,16 @@ services:
         paths:
           - /api/resume/documents
         strip_path: false
+      # Resume API: exports (list, create, download-link) – JWT required
+      - name: resume-exports-api
+        paths:
+          - /api/resume/exports
+        strip_path: false
+      # One-time export download (no JWT – token in query string)
+      - name: resume-export-download
+        paths:
+          - /api/resume/export-download
+        strip_path: false
       # Admin API: ai-usage, system-prompts (admin portal)
       - name: resume-admin-api
         paths:
@@ -93,6 +103,11 @@ plugins:
         - exp
   - name: jwt
     route: resume-api
+    config:
+      claims_to_verify:
+        - exp
+  - name: jwt
+    route: resume-exports-api
     config:
       claims_to_verify:
         - exp

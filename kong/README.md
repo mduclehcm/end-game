@@ -2,7 +2,7 @@
 
 Kong runs in **db-less** mode with a single declarative YAML. It provides:
 
-- **JWT**: Decode and validate Bearer tokens on protected routes (`/api/auth/me`, `/api/resume/documents`, `/api/admin/ai-usage`, `/api/admin/system-prompts`). The auth-service issues tokens with `iss: "algovn"`; Kong validates using the same `JWT_SECRET` from `.env`.
+- **JWT**: Decode and validate Bearer tokens on protected routes (`/api/auth/me`, `/api/resume/documents`, `/api/resume/exports`, `/api/admin/ai-usage`, `/api/admin/system-prompts`). The auth-service issues tokens with `iss: "algovn"`; Kong validates using the same `JWT_SECRET` from `.env`. The one-time export download (`/api/resume/export-download?exportId=&token=`) is public (no JWT) so the link works when opened in a new tab.
 - **User ID header**: A post-function runs after the JWT plugin (lower priority). When JWT validates successfully it sets `kong.ctx.shared.authenticated_jwt_token`. The post-function decodes the payload and sets `X-User-Id` (and optionally `X-Jwt-Claim-Email`) so upstream services receive a trusted user id without parsing JWTs.
 - **Rate limiting**: Per-service limits (auth: 100/min, 5000/hour; resume: 60/min, 2000/hour). Uses `local` policy (in-memory, per node).
 
@@ -12,7 +12,8 @@ Kong runs in **db-less** mode with a single declarative YAML. It provides:
 2. Start stack: `docker compose up -d`. Kong proxy is on **port 8000**.
 3. Call APIs via Kong:
    - Public (no JWT): `POST http://localhost:8000/api/auth/login`, `POST http://localhost:8000/api/auth/refresh`, etc.
-   - Protected: `Authorization: Bearer <access_token>` for `GET http://localhost:8000/api/auth/me`, `http://localhost:8000/api/resume/documents`, `http://localhost:8000/api/admin/ai-usage`, `http://localhost:8000/api/admin/system-prompts`, etc.
+   - Protected: `Authorization: Bearer <access_token>` for `GET http://localhost:8000/api/auth/me`, `http://localhost:8000/api/resume/documents`, `http://localhost:8000/api/resume/exports`, `http://localhost:8000/api/admin/ai-usage`, `http://localhost:8000/api/admin/system-prompts`, etc.
+   - Public (one-time): `GET http://localhost:8000/api/resume/export-download?exportId=...&token=...` (no Bearer token).
 
 Direct access to auth (3001) and resume (3000) still works for development.
 
