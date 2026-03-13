@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { Fragment, FragmentTree, PageFragment } from "@/core/layout";
+import type { Fragment, FragmentTree, PageFragment } from "@algo/cv-layout";
 import type { ResolvedStyleProps } from "@/core/render/render-tree";
 import { spaceBoxToCss } from "@/core/render/render-tree";
 import { cn } from "@/lib/utils";

@@ -13,6 +13,10 @@ module.exports = (options) => ({
 			"@domain": path.resolve(__dirname, "src/domain/index.ts"),
 			"@ports": path.resolve(__dirname, "src/ports/index.ts"),
 		},
+		// Let .js imports from TypeScript packages (e.g. cv-layout) resolve to .ts source
+		extensionAlias: {
+			".js": [".ts", ".js"],
+		},
 	},
 	module: {
 		...options.module,

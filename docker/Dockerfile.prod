@@ -9,8 +9,10 @@ ARG SERVICE_NAME
 WORKDIR /app
 
 
-# Copy only manifest files, then install (no source yet)
+# Copy only manifest files and workspace packages (for workspace:* resolution), then install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages/cv-core packages/cv-core
+COPY packages/cv-layout packages/cv-layout
 COPY services/${SERVICE_NAME}/package.json services/${SERVICE_NAME}/
 RUN pnpm install --frozen-lockfile
 

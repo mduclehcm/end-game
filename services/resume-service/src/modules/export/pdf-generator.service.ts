@@ -1,68 +1,76 @@
 import type { DocumentDetail } from "@algo/cv-core";
 import { Injectable } from "@nestjs/common";
-import { jsPDF } from "jspdf";
+import puppeteer from "puppeteer";
+import { createBrowserMeasureAdapter, MEASURE_PAGE_HTML } from "./browser-measure.adapter";
+import { fragmentTreeToHtml } from "./fragment-tree-to-html";
 
-const MARGIN = 20;
-const LINE_HEIGHT = 6;
-const TITLE_FONT_SIZE = 18;
-const SECTION_FONT_SIZE = 14;
-const BODY_FONT_SIZE = 10;
-const MAX_WIDTH = 210 - 2 * MARGIN; // A4 mm
+/** Fragment tree shape expected by fragmentTreeToHtml (first parameter). */
+type FragmentTreeForHtml = Parameters<typeof fragmentTreeToHtml>[0];
+
+/** Loader for the layout pipeline (dynamic import so ESM package can be used from CJS). Injected for tests. */
+export type LayoutPipelineLoader = () => Promise<{
+	runLayoutPipeline: (data: unknown, adapter: unknown) => Promise<FragmentTreeForHtml | null>;
+}>;
 
 @Injectable()
 export class PdfGeneratorService {
+	/** Overridable for tests; default loads @algo/cv-layout at runtime. */
+	loadLayoutPipeline: LayoutPipelineLoader = () => import("@algo/cv-layout");
+
 	/**
-	 * Generate a simple PDF from document detail (server-side layout).
-	 * For pixel-perfect match with the frontend, the layout algorithm could be shared in a package.
+	 * Generate a PDF from document using the shared layout pipeline and headless browser.
+	 * Layout is measured in the same browser context as the final render so export matches preview.
 	 */
 	async generatePdf(document: DocumentDetail): Promise<Buffer> {
-		const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-		let y = MARGIN;
+		const browser = await puppeteer.launch(this.launchOptions());
+		try {
+			const page = await browser.newPage();
+			await page.setContent(MEASURE_PAGE_HTML, { waitUntil: "domcontentloaded" });
 
-		doc.setFontSize(TITLE_FONT_SIZE);
-		doc.setFont("helvetica", "bold");
-		doc.text(document.title, MARGIN, y);
-		y += LINE_HEIGHT * 2;
-
-		const sectionsById = new Map(document.data.sections.map((s) => [s.id, s]));
-		for (const sectionId of document.data.sectionIds) {
-			const section = sectionsById.get(sectionId);
-			if (!section) continue;
-
-			doc.setFontSize(SECTION_FONT_SIZE);
-			doc.setFont("helvetica", "bold");
-			const sectionTitle = section.kind.charAt(0).toUpperCase() + section.kind.slice(1);
-			doc.text(sectionTitle, MARGIN, y);
-			y += LINE_HEIGHT * 1.5;
-
-			doc.setFontSize(BODY_FONT_SIZE);
-			doc.setFont("helvetica", "normal");
-
-			const orderedEntityIds = section.entityIds;
-			const entitiesById = new Map(section.entities.map((e) => [e.id, e]));
-			for (const entityId of orderedEntityIds) {
-				const entity = entitiesById.get(entityId);
-				if (!entity) continue;
-				for (const field of entity.fields) {
-					const value = document.data.fieldValues[field.id];
-					if (value == null || String(value).trim() === "") continue;
-					const label = field.label || field.key || field.id;
-					const lines = doc.splitTextToSize(`${label}: ${value}`, MAX_WIDTH - MARGIN);
-					for (const line of lines) {
-						if (y > 297 - MARGIN - LINE_HEIGHT) {
-							doc.addPage();
-							y = MARGIN;
-						}
-						doc.text(line, MARGIN, y);
-						y += LINE_HEIGHT;
-					}
-					y += LINE_HEIGHT * 0.5;
-				}
+			const adapter = createBrowserMeasureAdapter(page);
+			const { runLayoutPipeline } = await this.loadLayoutPipeline();
+			const fragmentTree: FragmentTreeForHtml | null = await runLayoutPipeline(document.data, adapter);
+			if (!fragmentTree || fragmentTree.length === 0) {
+				return this.emptyPdfBuffer();
 			}
-			y += LINE_HEIGHT;
-		}
 
-		const buf = doc.output("arraybuffer") as ArrayBuffer;
-		return Buffer.from(buf);
+			const html = fragmentTreeToHtml(fragmentTree, { title: document.title });
+			await page.setContent(html, {
+				waitUntil: "networkidle0",
+				timeout: 10000,
+			});
+			const pdfBuffer = await page.pdf({
+				format: "A4",
+				printBackground: true,
+				margin: { top: 0, right: 0, bottom: 0, left: 0 },
+			});
+			return Buffer.from(pdfBuffer);
+		} finally {
+			await browser.close();
+		}
+	}
+
+	private async emptyPdfBuffer(): Promise<Buffer> {
+		const browser = await puppeteer.launch(this.launchOptions());
+		try {
+			const page = await browser.newPage();
+			const buf = await page.pdf({ format: "A4" });
+			return Buffer.from(buf);
+		} finally {
+			await browser.close();
+		}
+	}
+
+	private launchOptions(): Parameters<typeof puppeteer.launch>[0] {
+		const args = ["--no-sandbox", "--disable-setuid-sandbox"];
+		const options: Parameters<typeof puppeteer.launch>[0] = {
+			headless: true,
+			args,
+		};
+		const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+		if (executablePath) {
+			options.executablePath = executablePath;
+		}
+		return options;
 	}
 }

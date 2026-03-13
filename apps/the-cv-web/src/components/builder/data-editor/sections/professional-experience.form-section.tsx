@@ -1,6 +1,6 @@
 import { CopyIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fieldPath } from "@/core/layout/document-view";
+import { fieldPath } from "@algo/cv-layout";
 import { findSection, getOrderedEntities, useBuilderStore } from "@/store";
 import { BuilderFieldInput, BuilderRichTextInput } from "../input";
 import { Section } from "../section";

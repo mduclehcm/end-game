@@ -60,10 +60,13 @@ services:
       MINIO_BUCKET: resume-exports
       MINIO_FORCE_PATH_STYLE: "true"
       EXPORT_WORKER_ENABLED: "true"
+      # Use system Chromium for PDF export (installed in image when SERVICE_NAME=resume-service)
+      PUPPETEER_EXECUTABLE_PATH: "/usr/bin/chromium"
     volumes:
       # Whole service folder from volume (src, config, etc.)
       - ./services/resume-service:/app/services/resume-service
       - ./packages/cv-core:/app/packages/cv-core
+      - ./packages/cv-layout:/app/packages/cv-layout
     depends_on:
       postgres:
         condition: service_healthy

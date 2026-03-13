@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { fieldPath } from "@/core/layout/document-view";
+import { fieldPath } from "@algo/cv-layout";
 import { cn } from "@/lib/utils";
 import { getOrderedEntities, useBuilderStore } from "@/store";
 import { BuilderFieldInput } from "../input";

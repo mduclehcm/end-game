@@ -1,4 +1,4 @@
-import type { Fragment, FragmentTextContent, FragmentTree, PageFragment } from "@/core/layout";
+import type { Fragment, FragmentTextContent, FragmentTree, PageFragment } from "@algo/cv-layout";
 
 const PX_TO_PT = 72 / 96;
 
@@ -80,8 +80,9 @@ export async function exportFragmentTreeToPdf(
 		if (page.pageIndex > 0) {
 			doc.addPage();
 		}
-		const offsetX = page.contentLeft ?? 0;
-		const offsetY = page.contentTop ?? 0;
+		// Fragment x,y are already in page space (include content area offset); use 0 so we don't double-apply.
+		const offsetX = 0;
+		const offsetY = 0;
 		for (const frag of page.fragments) {
 			drawFragment(frag, offsetX, offsetY);
 		}

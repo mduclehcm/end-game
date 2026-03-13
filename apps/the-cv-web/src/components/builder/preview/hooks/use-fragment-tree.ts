@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { FragmentTree } from "@/core/layout";
+import type { FragmentTree } from "@algo/cv-layout";
 import { useBuilderStore } from "@/store";
 import { runLayoutPipeline } from "../lib/run-layout-pipeline";
 

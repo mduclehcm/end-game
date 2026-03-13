@@ -1,4 +1,5 @@
 import type { DocumentData } from "@algo/cv-core";
+import { type DocumentTemplate, fixed, type LayoutNode } from "@algo/cv-layout";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { DataEditor } from "@/components/builder/data-editor";
@@ -6,7 +7,6 @@ import { BuilderHeader } from "@/components/header/builder.header";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
-import { type DocumentTemplate, fixed, type LayoutNode } from "@/core/document";
 import type { RenderTree } from "@/core/render/render-tree";
 import { useDocumentDetail } from "@/hooks/use-document-queries";
 import { useBuilderStore } from "@/store";

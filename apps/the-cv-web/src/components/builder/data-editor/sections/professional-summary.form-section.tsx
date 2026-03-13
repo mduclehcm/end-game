@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { fieldPath } from "@/core/layout/document-view";
+import { fieldPath } from "@algo/cv-layout";
 import { getOrderedEntities, useBuilderStore } from "@/store";
 import { BuilderRichTextInput } from "../input";
 import { Section } from "../section";
