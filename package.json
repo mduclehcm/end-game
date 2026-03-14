@@ -17,5 +17,14 @@
 	},
 	"resolutions": {
 		"webpack": "^5.105.2"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@nestjs/core",
+			"core-js",
+			"esbuild",
+			"msw",
+			"unrs-resolver"
+		]
 	}
 }
