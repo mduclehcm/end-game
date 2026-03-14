@@ -25,6 +25,7 @@ services:
           - /api/auth/zalo
           - /api/auth/zalo/callback
           - /api/admin/setup
+          - /api/admin/setup/status
         strip_path: false
       - name: auth-protected
         paths:
@@ -33,7 +34,6 @@ services:
       - name: auth-admin-api
         paths:
           - /api/admin/users
-          - /api/admin/setup/status
         strip_path: false
     plugins:
       - name: rate-limiting

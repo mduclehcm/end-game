@@ -45,11 +45,7 @@ export default function App() {
 							<SidebarMenu>
 								{nav.map(({ path, label, icon: Icon }) => (
 									<SidebarMenuItem key={path}>
-										<SidebarMenuButton
-											asChild
-											isActive={location.pathname.startsWith(path)}
-											tooltip={label}
-										>
+										<SidebarMenuButton asChild isActive={location.pathname.startsWith(path)} tooltip={label}>
 											<Link to={path}>
 												<Icon className="size-4" />
 												<span>{label}</span>

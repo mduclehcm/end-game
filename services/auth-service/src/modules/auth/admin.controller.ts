@@ -41,18 +41,17 @@ export class AdminController {
 		if (adminCount > 0) {
 			throw new ConflictException("Setup already completed. An admin already exists.");
 		}
-		const result = await this.authService.register({
+		await this.authService.register({
 			email: body.email,
 			password: body.password,
 			username: body.username,
 			displayName: body.displayName,
 		});
-		const user = await this.userRepository.updateRole(result.user.id, UserRole.ADMIN);
+		const existingUser = await this.userRepository.findByEmail(body.email);
+		if (!existingUser) throw new BadRequestException("Failed to create user");
+		const user = await this.userRepository.updateRole(existingUser.id, UserRole.ADMIN);
 		if (!user) throw new BadRequestException("Failed to set admin role");
-		return {
-			...result,
-			user: { ...result.user, role: UserRole.ADMIN },
-		};
+		return this.authService.buildAuthResponseForUser(user);
 	}
 
 	@Get("users")

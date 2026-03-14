@@ -136,6 +136,10 @@ export class AuthService {
 		return this.userRepository.findById(id);
 	}
 
+	async buildAuthResponseForUser(user: UserRow): Promise<AuthResponseDto> {
+		return this.buildAuthResponse(user);
+	}
+
 	private async buildAuthResponse(user: UserRow): Promise<AuthResponseDto> {
 		const accessToken = this.tokenService.signAccessToken({ sub: user.id, email: user.email, role: user.role });
 		const { token: refreshToken } = await this.tokenService.signRefreshToken(user.id);
