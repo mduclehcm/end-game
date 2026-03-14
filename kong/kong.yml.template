@@ -24,10 +24,16 @@ services:
           - /api/auth/google/callback
           - /api/auth/zalo
           - /api/auth/zalo/callback
+          - /api/admin/setup
         strip_path: false
       - name: auth-protected
         paths:
           - /api/auth/me
+        strip_path: false
+      - name: auth-admin-api
+        paths:
+          - /api/admin/users
+          - /api/admin/setup/status
         strip_path: false
     plugins:
       - name: rate-limiting
@@ -94,8 +100,10 @@ plugins:
           if not ok or not decoded then return end
           local sub = decoded:match('"sub"%s*:%s*"([^"]*)"')
           local email = decoded:match('"email"%s*:%s*"([^"]*)"')
+          local role = decoded:match('"role"%s*:%s*"([^"]*)"')
           if sub and #sub > 0 then kong.service.request.set_header("X-User-Id", sub) end
           if email and #email > 0 then kong.service.request.set_header("X-Jwt-Claim-Email", email) end
+          if role and #role > 0 then kong.service.request.set_header("X-Jwt-Claim-Role", role) end
   - name: jwt
     route: auth-protected
     config:
@@ -113,6 +121,11 @@ plugins:
         - exp
   - name: jwt
     route: resume-admin-api
+    config:
+      claims_to_verify:
+        - exp
+  - name: jwt
+    route: auth-admin-api
     config:
       claims_to_verify:
         - exp

@@ -1,8 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import { RequireAdminGuard } from "../../guards/require-admin.guard";
 import type { SystemPromptDto } from "./system-prompt.repository";
 import { SystemPromptService } from "./system-prompt.service";
 
 @Controller("admin/system-prompts")
+@UseGuards(RequireAdminGuard)
 export class SystemPromptController {
 	constructor(private readonly systemPromptService: SystemPromptService) {}
 

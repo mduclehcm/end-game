@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, ilike, or } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { DRIZZLE } from "../../database/database.provider";
 import type * as schema from "../../database/schema";
@@ -10,6 +10,7 @@ import {
 	type UserRow,
 	UsersTable,
 } from "../../database/schema";
+import type { UserRole } from "../../database/schema/user.schema";
 
 export interface CreateUserPayload {
 	email: string;
@@ -101,5 +102,30 @@ export class UserRepository {
 			.returning();
 		if (!inserted) throw new Error("Failed to create oauth account");
 		return inserted;
+	}
+
+	async findAll(opts: { limit: number; offset: number; search?: string }): Promise<{ users: UserRow[]; total: number }> {
+		const where = opts.search
+			? or(ilike(UsersTable.email, `%${opts.search}%`), ilike(UsersTable.displayName, `%${opts.search}%`))
+			: undefined;
+		const [users, [countResult]] = await Promise.all([
+			this.db.select().from(UsersTable).where(where).limit(opts.limit).offset(opts.offset).orderBy(UsersTable.createdAt),
+			this.db.select({ count: count() }).from(UsersTable).where(where),
+		]);
+		return { users, total: countResult?.count ?? 0 };
+	}
+
+	async updateRole(id: string, role: UserRole): Promise<UserRow | null> {
+		const [updated] = await this.db
+			.update(UsersTable)
+			.set({ role, updatedAt: new Date() })
+			.where(eq(UsersTable.id, id))
+			.returning();
+		return updated ?? null;
+	}
+
+	async countByRole(role: UserRole): Promise<number> {
+		const [result] = await this.db.select({ count: count() }).from(UsersTable).where(eq(UsersTable.role, role));
+		return result?.count ?? 0;
 	}
 }

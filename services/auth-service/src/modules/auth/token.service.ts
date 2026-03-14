@@ -11,6 +11,7 @@ import { RefreshTokensTable } from "../../database/schema";
 export interface AccessTokenPayload {
 	sub: string;
 	email: string;
+	role: string;
 }
 
 @Injectable()
