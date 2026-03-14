@@ -18,6 +18,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
 
 	async validate(payload: AccessTokenPayload): Promise<JwtPayload> {
 		if (!payload?.sub || !payload?.email) throw new UnauthorizedException("Invalid token");
-		return { sub: payload.sub, email: payload.email };
+		return { sub: payload.sub, email: payload.email, role: payload.role ?? "user" };
 	}
 }
