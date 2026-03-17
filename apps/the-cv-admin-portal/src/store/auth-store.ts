@@ -109,6 +109,11 @@ export const useAuthStore = create<AuthState>()(
 		login: async (login: string, password: string) => {
 			const res = await apiLogin(login, password);
 			if (res.user.role !== "admin") {
+				try {
+					await apiLogout(res.refreshToken);
+				} catch {
+					// best-effort revocation
+				}
 				throw new Error("Access denied. Admin role required.");
 			}
 			applyAuthResponse(set, get, res);
@@ -171,6 +176,11 @@ export const useAuthStore = create<AuthState>()(
 				try {
 					const res = await apiRefreshToken(refreshToken);
 					if (res.user.role !== "admin") {
+						try {
+							await apiLogout(res.refreshToken);
+						} catch {
+							// best-effort revocation
+						}
 						clearStorage();
 						set({ isLoading: false });
 						return;
@@ -186,6 +196,11 @@ export const useAuthStore = create<AuthState>()(
 			try {
 				const me = await apiGetMe(accessToken);
 				if (me.role !== "admin") {
+					try {
+						await apiLogout(refreshToken);
+					} catch {
+						// best-effort revocation
+					}
 					clearStorage();
 					set({ isLoading: false });
 					return;
@@ -203,6 +218,11 @@ export const useAuthStore = create<AuthState>()(
 				try {
 					const res = await apiRefreshToken(refreshToken);
 					if (res.user.role !== "admin") {
+						try {
+							await apiLogout(res.refreshToken);
+						} catch {
+							// best-effort revocation
+						}
 						clearStorage();
 						set({ isLoading: false });
 						return;
