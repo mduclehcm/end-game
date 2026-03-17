@@ -8,6 +8,7 @@ export interface AuthResponseDto {
 		username: string | null;
 		displayName: string;
 		avatarUrl: string | null;
+		role: string;
 	};
 }
 

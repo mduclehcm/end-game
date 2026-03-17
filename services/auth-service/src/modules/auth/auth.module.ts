@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
+import { AdminController } from "./admin.controller";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { GoogleStrategy } from "./strategies/google.strategy";
@@ -37,7 +38,7 @@ function hasZaloOAuthConfig(): boolean {
 			inject: [ConfigService],
 		}),
 	],
-	controllers: [AuthController],
+	controllers: [AuthController, AdminController],
 	providers: [
 		AuthService,
 		TokenService,

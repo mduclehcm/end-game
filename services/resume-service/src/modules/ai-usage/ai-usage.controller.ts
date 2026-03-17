@@ -1,4 +1,5 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { RequireAdminGuard } from "../../guards/require-admin.guard";
 import { LlmUsageService } from "./llm-usage.service";
 
 function parseLimit(value: string | undefined, fallback: number): number {
@@ -16,6 +17,7 @@ function parseOffset(value: string | undefined, fallback: number): number {
 }
 
 @Controller("admin/ai-usage")
+@UseGuards(RequireAdminGuard)
 export class AiUsageController {
 	constructor(private readonly llmUsageService: LlmUsageService) {}
 
