@@ -5,6 +5,6 @@ export default defineConfig({
 	out: "./drizzle",
 	dialect: "postgresql",
 	dbCredentials: {
-		url: process.env.DATABASE_URL ?? "postgresql://algo:algo@localhost:5432/algo_dev",
+		url: process.env.DATABASE_URL ?? "postgresql://algo:algo@localhost:5432/algo_auth",
 	},
 });

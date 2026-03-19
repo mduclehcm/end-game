@@ -1,19 +1,66 @@
 services:
+  # Auth service database (users, oauth_accounts, refresh_tokens)
   postgres:
     image: postgres:18
     environment:
       POSTGRES_USER: algo
       POSTGRES_PASSWORD: algo
-      POSTGRES_DB: algo_dev
+      POSTGRES_DB: algo_auth
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U algo -d algo_dev"]
+      # Use 'postgres' DB so health passes even when reusing volume that had different POSTGRES_DB
+      test: ["CMD-SHELL", "pg_isready -U algo -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # Resume service database (resume_documents, system_prompts, llm_usage_logs, etc.)
+  postgres-resume:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: algo
+      POSTGRES_PASSWORD: algo
+      POSTGRES_DB: algo_resume
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_resume_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U algo -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Ensure algo_auth DB exists (e.g. when reusing volume that had algo_dev)
+  postgres-auth-init:
+    image: postgres:18
+    environment:
+      PGPASSWORD: algo
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - sh
+      - -c
+      - "psql -h postgres -U algo -d postgres -c 'CREATE DATABASE algo_auth' || true"
+
+  # Ensure algo_resume DB exists (e.g. when reusing volume that had algo_dev)
+  postgres-resume-init:
+    image: postgres:18
+    environment:
+      PGPASSWORD: algo
+    depends_on:
+      postgres-resume:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - sh
+      - -c
+      - "psql -h postgres-resume -U algo -d postgres -c 'CREATE DATABASE algo_resume' || true"
 
   minio:
     image: minio/minio:latest
@@ -53,7 +100,7 @@ services:
     environment:
       PORT: "3000"
       NODE_ENV: development
-      DATABASE_URL: "postgresql://algo:algo@postgres:5432/algo_dev"
+      DATABASE_URL: "postgresql://algo:algo@postgres-resume:5432/algo_resume"
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ACCESS_KEY: algo
       MINIO_SECRET_KEY: algodev8
@@ -68,10 +115,16 @@ services:
       - ./packages/cv-core:/app/packages/cv-core
       - ./packages/cv-layout:/app/packages/cv-layout
     depends_on:
-      postgres:
+      postgres-resume:
         condition: service_healthy
+      postgres-resume-init:
+        condition: service_completed_successfully
       minio-init:
         condition: service_completed_successfully
+    command:
+      - sh
+      - -c
+      - "pnpm --filter @algo/resume-service exec drizzle-kit push --force && exec pnpm exec turbo run dev --filter=@algo/resume-service..."
 
   auth-service:
     build:
@@ -87,12 +140,18 @@ services:
       AUTH_SERVICE_PORT: "3001"
       PORT: "3001"
       NODE_ENV: development
-      DATABASE_URL: "postgresql://algo:algo@postgres:5432/algo_dev"
+      DATABASE_URL: "postgresql://algo:algo@postgres:5432/algo_auth"
     volumes:
       - ./services/auth-service:/app/services/auth-service
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-auth-init:
+        condition: service_completed_successfully
+    command:
+      - sh
+      - -c
+      - "pnpm --filter @algo/auth-service exec drizzle-kit push --force && exec pnpm exec turbo run dev --filter=@algo/auth-service..."
 
   kong:
     build:
@@ -120,4 +179,5 @@ services:
 
 volumes:
   postgres_data:
+  postgres_resume_data:
   minio_data:

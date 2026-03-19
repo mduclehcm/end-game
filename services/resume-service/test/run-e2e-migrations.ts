@@ -9,7 +9,7 @@ import { Pool } from "pg";
 const drizzleDir = join(__dirname, "../drizzle");
 
 export async function runE2eMigrations(): Promise<void> {
-	const connectionString = process.env.DATABASE_URL ?? "postgresql://algo:algo@localhost:5432/algo_dev";
+	const connectionString = process.env.DATABASE_URL ?? "postgresql://algo:algo@localhost:5433/algo_resume";
 	const pool = new Pool({ connectionString });
 	try {
 		await pool.query(readFileSync(join(drizzleDir, "0004_system_prompts.sql"), "utf8"));

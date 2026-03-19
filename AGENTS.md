@@ -16,15 +16,16 @@ pnpm 10.27.0 via corepack. Run `corepack enable && corepack prepare pnpm@10.27.0
 
 ### Infrastructure
 
-All infrastructure runs via Docker Compose (`docker compose up -d`): PostgreSQL 18, Kong API Gateway (db-less), MinIO (S3-compatible storage), plus the `auth-service` and `resume-service` NestJS backends.
+All infrastructure runs via Docker Compose (`docker compose up -d`): two PostgreSQL 18 instances (auth + resume), Kong API Gateway (db-less), MinIO (S3-compatible storage), plus the `auth-service` and `resume-service` NestJS backends.
 
 Start Docker daemon first: `sudo dockerd &>/tmp/dockerd.log &` then `sudo docker compose up -d`.
 
-### Database migrations (shared DB gotcha)
+### Databases (two separate DBs)
 
-Both `auth-service` and `resume-service` share a single PostgreSQL database (`algo_dev`). **Do NOT use `drizzle-kit push --force`** — it drops tables belonging to the other service. Without `--force`, drizzle push also drops unknown tables silently.
+- **Auth DB** (`postgres` service, port 5432, database `algo_auth`): used by `auth-service` — tables `users`, `oauth_accounts`, `refresh_tokens`.
+- **Resume DB** (`postgres-resume` service, port 5433, database `algo_resume`): used by `resume-service` — tables `llm_usage_logs`, `resume_documents`, `resume_exports`, `resume_export_download_tokens`, `resume_field_values`, `system_prompts`.
 
-**Safe approach:** Create tables via SQL directly or run `drizzle-kit push` (without `--force`) for each service in sequence, using `expect` to auto-select "create table" for each prompt. Run auth-service push first (tables: `users`, `oauth_accounts`, `refresh_tokens`), then resume-service (tables: `llm_usage_logs`, `resume_documents`, `resume_exports`, `resume_export_download_tokens`, `resume_field_values`, `system_prompts`). See the `expect` pattern used during initial setup for reference.
+Each service has its own Drizzle schema and migrations; run `drizzle-kit push` or `drizzle-kit migrate` per service (from that service’s directory or via its package scripts). No cross-service table conflicts.
 
 ### Environment variables
 
@@ -39,7 +40,8 @@ Copy `.env.example` to `.env` and fill in at minimum `JWT_SECRET` and `JWT_REFRE
 | Auth service | via Docker Compose | 3001 |
 | Resume service | via Docker Compose | 3000 |
 | Kong API Gateway | via Docker Compose | 8000 |
-| PostgreSQL | via Docker Compose | 5432 |
+| PostgreSQL (auth) | via Docker Compose | 5432 |
+| PostgreSQL (resume) | via Docker Compose | 5433 |
 
 The frontend proxies `/api` requests to Kong on port 8000.
 

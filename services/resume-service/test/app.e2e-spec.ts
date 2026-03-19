@@ -39,7 +39,7 @@ describe("Resume API (e2e) – contract baselines", () => {
 
 	beforeAll(async () => {
 		if (!process.env.DATABASE_URL) {
-			process.env.DATABASE_URL = "postgresql://algo:algo@localhost:5432/algo_dev";
+			process.env.DATABASE_URL = "postgresql://algo:algo@localhost:5433/algo_resume";
 		}
 		await runE2eMigrations();
 		const moduleFixture: TestingModule = await Test.createTestingModule({
